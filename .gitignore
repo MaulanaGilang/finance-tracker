@@ -1,0 +1,9 @@
+node_modules
+dist
+dev-dist
+*.local
+.vercel
+graphify-out
+.env
+.env.*
+!.env.example
