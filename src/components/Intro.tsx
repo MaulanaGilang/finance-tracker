@@ -38,7 +38,7 @@ export function Intro() {
           aria-hidden
         >
           <div className="flex items-center gap-3.5">
-            <svg width="44" height="44" viewBox="0 0 44 44" className="text-forest">
+            <svg width="44" height="44" viewBox="0 0 44 44" className="text-accent">
               <motion.circle
                 cx="22" cy="22" r="19" fill="none" stroke="currentColor" strokeWidth="2.2"
                 initial={{ pathLength: 0, rotate: -90 }}

@@ -149,7 +149,7 @@ function ComposerSheet({ onClose }: { onClose: () => void }) {
           <label htmlFor="amount" className="mb-2 block text-[13px] font-[480] text-muted">
             Amount
           </label>
-          <div className="flex items-baseline gap-2 border-b border-line-strong pb-2 focus-within:border-forest">
+          <div className="flex items-baseline gap-2 border-b border-line-strong pb-2 focus-within:border-accent">
             <span className="font-display text-[24px] text-muted">Rp</span>
             <input
               ref={amountRef}
@@ -186,7 +186,7 @@ function ComposerSheet({ onClose }: { onClose: () => void }) {
                     aria-pressed={active}
                     className={cx(
                       'inline-flex h-9 items-center gap-2 rounded-pill border px-3.5 text-[14px] transition-colors',
-                      active ? 'border-forest bg-forest-soft font-[480] text-forest' : 'border-line bg-card text-ink hover:border-line-strong',
+                      active ? 'border-accent bg-accent-soft font-[480] text-accent' : 'border-line bg-card text-ink hover:border-line-strong',
                     )}
                   >
                     <span className="size-2.5 rounded-full" style={{ background: c.color }} />

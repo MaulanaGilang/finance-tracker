@@ -1,4 +1,6 @@
 import type { Category, Transaction } from './api'
+import type { Job, JobCategory, JobFlexibility, JobInput, JobStatus } from './jobs'
+import { STATUS } from './jobs'
 import { addMonths, currentMonth } from './format'
 
 /** Dev-only: http://localhost:5173/?demo renders the app on in-memory sample data, no network. */
@@ -42,4 +44,66 @@ export function demoTransactions(): Transaction[] {
       return { id: `demo-${i}`, type, amount, category_id, date, note, created_at: `${date}T12:00:00Z` }
     })
     .sort((a, b) => b.date.localeCompare(a.date))
+}
+
+/** Fictional applications covering every status, so the Jobs screens can be checked without real data. */
+export function demoJobs(): Job[] {
+  const day = 864e5
+  const rows: [string, string, string, JobCategory, JobFlexibility, JobStatus, string, number | null, number | null, number, number][] = [
+    // position, company, location, category, flex, status, platform, salMin, salMax, appliedDaysAgo, statusDaysAgo
+    ['Data Engineer', 'Kirana Logistik', 'Jakarta Selatan', 'full_time', 'hybrid', 'user_interview', 'LinkedIn', 9e6, 12e6, 30, 2],
+    ['Analytics Engineer', 'Sagara Pay', 'Jakarta Pusat', 'full_time', 'remote', 'offer', 'Glints', 11e6, 14e6, 41, 1],
+    ['Junior Data Engineer', 'Lumbung Tani', 'Bandung', 'contract', 'onsite', 'test', 'Glints', 6e6, 8e6, 16, 4],
+    ['Data Engineer', 'Arunika Health', 'Jakarta Barat', 'full_time', 'onsite', 'hr_interview', 'Kalibrr', null, null, 12, 3],
+    ['BI Engineer', 'Pelita Retail', 'Tangerang', 'contract', 'onsite', 'applied', 'LinkedIn', 7e6, 9e6, 12, 12],
+    ['Data Engineer', 'Nusa Mobility', 'Jakarta Selatan', 'full_time', 'hybrid', 'applied', 'Dealls', null, null, 11, 11],
+    ['ETL Developer', 'Banyu Energi', 'Bekasi', 'contract', 'onsite', 'applied', 'Glints', 5.5e6, 7e6, 4, 4],
+    ['Data Platform Engineer', 'Rimba Cloud', 'Jakarta Pusat', 'full_time', 'remote', 'applied', 'LinkedIn', 12e6, 16e6, 2, 2],
+    ['Data Engineer', 'Selaras Insurance', 'Jakarta Pusat', 'full_time', 'onsite', 'rejected', 'LinkedIn', 8e6, 10e6, 25, 9],
+    ['Big Data Engineer', 'Cakra Telco', 'Jakarta Timur', 'full_time', 'onsite', 'ghosted', 'Indeed', null, null, 33, 5],
+    ['Data Engineer Intern', 'Teras Edu', 'Depok', 'part_time', 'remote', 'medical_checkup', 'Instagram', 4e6, 5e6, 27, 1],
+    ['Data Engineer', 'Kenari Media', 'Jakarta Selatan', 'contract', 'onsite', 'other', 'Kalibrr', null, null, 9, 6],
+  ]
+  const iso = (ago: number) => new Date(Date.now() - ago * day).toISOString()
+  return rows.map(([position, company, location, category, flexibility, status, platform, salary_min, salary_max, applied, changed], i) => ({
+    id: `demo-job-${i}`,
+    position,
+    company,
+    location,
+    category,
+    flexibility,
+    status,
+    platform,
+    link: 'https://example.com',
+    salary_min,
+    salary_max,
+    applied_date: iso(applied).slice(0, 10),
+    status_changed_at: iso(changed),
+    auto_ghosted: status === 'ghosted',
+    max_stage: status === 'rejected' ? 1 : (STATUS[status].stage ?? 0),
+    notes: null,
+    created_at: iso(applied),
+    updated_at: iso(changed),
+  }))
+}
+
+/** Demo mode only: apply a job save in memory, mirroring save_job's rules (clock reset, max stage). */
+export function demoSaveJob(jobs: Job[], input: JobInput): Job {
+  const now = new Date().toISOString()
+  const prev = jobs.find((j) => j.id === input.id)
+  const changed = !prev || prev.status !== input.status
+  const stage = STATUS[input.status].stage ?? 0
+  return {
+    ...(prev ?? { id: `demo-job-${Date.now()}`, created_at: now, auto_ghosted: false, max_stage: 0 }),
+    ...input,
+    id: prev?.id ?? `demo-job-${Date.now()}`,
+    location: input.location || null,
+    platform: input.platform || null,
+    link: input.link || null,
+    notes: input.notes || null,
+    status_changed_at: changed ? (prev ? now : new Date(input.applied_date + 'T00:00:00').toISOString()) : prev!.status_changed_at,
+    auto_ghosted: changed ? false : prev!.auto_ghosted,
+    max_stage: Math.max(prev?.max_stage ?? 0, stage),
+    updated_at: now,
+  } as Job
 }

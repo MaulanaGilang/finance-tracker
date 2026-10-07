@@ -1,6 +1,14 @@
 # Ledger
 
-Personal income and spending tracker. Mercury-inspired layout on a light "Forest" palette, mobile-first, free to run.
+Personal tools behind one PIN: intro → PIN → choose a tool. Mercury-inspired layout, mobile-first, free to run.
+
+- **Budget** (`/budget`, Forest green): income and spending, dashboard, reports.
+- **Job Applications** (`/jobs`, Ink blue): pipeline dashboard (funnel, going quiet, response rate by platform,
+  applications per week, salary overview), searchable table, drag-and-drop board.
+  Applications still waiting on the company are auto-marked **Ghosted** after 14 days without a status change;
+  changing the status by hand restarts the clock.
+
+Each tool re-tints the whole app (Arc-style "spaces"). Dev-only demo data: `http://localhost:5173/?demo`.
 
 ## Stack
 

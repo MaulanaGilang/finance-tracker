@@ -1,6 +1,7 @@
-﻿import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { demoCategories, demoTransactions, isDemo } from './demo'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { demoCategories, demoJobs, demoSaveJob, demoTransactions, isDemo } from './demo'
 import { api, ApiError, type Category, type CategoryInput, type Transaction, type TransactionInput } from './api'
+import type { Job, JobInput } from './jobs'
 
 type Status = 'checking' | 'setup' | 'locked' | 'ready' | 'offline'
 
@@ -10,6 +11,7 @@ interface Store {
   loadError: string | null
   categories: Category[]
   transactions: Transaction[]
+  jobs: Job[]
 
   setupPin: (pin: string) => Promise<void>
   unlock: (pin: string) => Promise<boolean>
@@ -21,12 +23,18 @@ interface Store {
   deleteTransaction: (id: string) => Promise<void>
   saveCategory: (c: CategoryInput) => Promise<void>
   deleteCategory: (id: string) => Promise<void>
+  saveJob: (j: JobInput) => Promise<Job>
+  deleteJob: (id: string) => Promise<void>
 
   composer: { open: boolean; editing: Transaction | null }
   /** id of the transaction just saved, briefly highlighted in lists */
   highlightId: string | null
   openComposer: (editing?: Transaction) => void
   closeComposer: () => void
+
+  jobComposer: { open: boolean; editing: Job | null }
+  openJobComposer: (editing?: Job) => void
+  closeJobComposer: () => void
 }
 
 const TOKEN_KEY = 'ledger.session'
@@ -57,6 +65,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [jobComposer, setJobComposer] = useState<{ open: boolean; editing: Job | null }>({ open: false, editing: null })
   const [composer, setComposer] = useState<{ open: boolean; editing: Transaction | null }>({
     open: false,
     editing: null,
@@ -73,6 +83,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setToken(null)
     setCategories([])
     setTransactions([])
+    setJobs([])
     try {
       setStatus((await api.pinIsSet()) ? 'locked' : 'setup')
     } catch {
@@ -85,9 +96,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setLoading(true)
       setLoadError(null)
       try {
-        const [cats, txs] = await Promise.all([api.getCategories(t), api.getTransactions(t)])
+        const [cats, txs, js] = await Promise.all([api.getCategories(t), api.getTransactions(t), api.getJobs(t)])
         setCategories(cats)
         setTransactions(txs)
+        setJobs(js)
         setStatus('ready')
       } catch (e) {
         if (isSessionError(e)) await resetToLock()
@@ -107,6 +119,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       // View-only sample data for local design work; saving is not supported in demo mode.
       setCategories(demoCategories)
       setTransactions(demoTransactions())
+      setJobs(demoJobs())
       setStatus('ready')
       return
     }
@@ -146,6 +159,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       loadError,
       categories,
       transactions,
+      jobs,
 
       setupPin: async (pin) => startSession(await api.setupPin(pin)),
       unlock: async (pin) => {
@@ -189,12 +203,31 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setTransactions((prev) => prev.map((x) => (x.category_id === id ? { ...x, category_id: null } : x)))
       },
 
+      saveJob: async (input) => {
+        const saved = isDemo ? demoSaveJob(jobs, input) : await guarded((t) => api.saveJob(t, input))
+        setJobs((prev) =>
+          [saved, ...prev.filter((x) => x.id !== saved.id)].sort(
+            (a, b) => b.applied_date.localeCompare(a.applied_date) || b.created_at.localeCompare(a.created_at),
+          ),
+        )
+        setHighlightId(saved.id)
+        return saved
+      },
+      deleteJob: async (id) => {
+        if (!isDemo) await guarded((t) => api.deleteJob(t, id))
+        setJobs((prev) => prev.filter((x) => x.id !== id))
+      },
+
       composer,
       highlightId,
       openComposer: (editing) => setComposer({ open: true, editing: editing ?? null }),
       closeComposer: () => setComposer((c) => ({ ...c, open: false })),
+
+      jobComposer,
+      openJobComposer: (editing) => setJobComposer({ open: true, editing: editing ?? null }),
+      closeJobComposer: () => setJobComposer((c) => ({ ...c, open: false })),
     }),
-    [status, loading, loadError, categories, transactions, composer, highlightId, token, guarded, load, resetToLock, startSession],
+    [status, loading, loadError, categories, transactions, jobs, composer, jobComposer, highlightId, token, guarded, load, resetToLock, startSession],
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

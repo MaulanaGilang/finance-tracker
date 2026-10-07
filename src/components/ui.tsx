@@ -13,7 +13,7 @@ export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Bool
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
 
 const variants: Record<Variant, string> = {
-  primary: 'glow-button bg-forest text-white',
+  primary: 'glow-button bg-accent text-white',
   secondary: 'bg-raised text-ink hover:bg-line',
   ghost: 'border border-line-strong text-ink hover:bg-raised',
   danger: 'border border-line-strong text-expense hover:bg-expense/5',
@@ -163,7 +163,7 @@ export function Field({ label, htmlFor, children, hint }: { label: string; htmlF
 }
 
 export const inputClass =
-  'h-12 w-full rounded-pill border border-line-strong bg-card px-5 text-[16px] text-ink placeholder:text-muted/80 focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/15'
+  'h-12 w-full rounded-pill border border-line-strong bg-card px-5 text-[16px] text-ink placeholder:text-muted/80 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15'
 
 export const selectClass = inputClass + ' appearance-none pr-10 bg-[url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 256 256%27%3E%3Cpath fill=%27%23616862%27 d=%27M213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80a8 8 0 0 1 11.32-11.32L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32Z%27/%3E%3C/svg%3E")] bg-[length:12px] bg-[right_1.1rem_center] bg-no-repeat'
 

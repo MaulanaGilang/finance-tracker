@@ -4,20 +4,38 @@ import { Button, Card, CardTitle, Field, IconButton, PageHeader, cx, inputClass 
 import type { Category, TxType } from '../lib/api'
 import { friendlyError } from '../lib/api'
 import { todayISO } from '../lib/format'
+import { CATEGORY, FLEXIBILITY, GHOST_DAYS, STATUS } from '../lib/jobs'
 import { useStore } from '../lib/store'
+import type { Tool } from '../components/AppShell'
 
 const SWATCHES = ['#1F4D3A', '#2F7A55', '#3F6E5A', '#4E9470', '#6B8F7D', '#8DB59E', '#A3B8AC', '#B5483B', '#C9846F', '#D4A65A', '#5B6B8C', '#B9BDB7']
 
-export function Settings() {
+/**
+ * Settings, scoped to the tool you're in. Security (PIN, lock) and the full backup are shared;
+ * everything else only shows in its own tool.
+ */
+export function Settings({ tool }: { tool: Tool }) {
   return (
     <div className="flex flex-col gap-6 sm:gap-8">
       <PageHeader title="Settings" />
+      {tool === 'budget' && (
+        <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
+          <CategoryManager type="expense" />
+          <CategoryManager type="income" />
+        </div>
+      )}
+      {tool === 'jobs' && (
+        <Card>
+          <CardTitle>Ghost rule</CardTitle>
+          <p className="max-w-[60ch] text-[14px] leading-[1.6] text-muted">
+            An application still waiting on the company is marked <span className="text-ink">Ghosted</span> after {GHOST_DAYS} days
+            without a status change. It shows an "auto" tag so you know the app did it. If the company gets back to you later,
+            just change the status: the {GHOST_DAYS}-day clock restarts. Offers and accepted jobs are never ghosted.
+          </p>
+        </Card>
+      )}
       <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
-        <CategoryManager type="expense" />
-        <CategoryManager type="income" />
-      </div>
-      <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
-        <Backup />
+        <Backup tool={tool} />
         <Security />
       </div>
     </div>
@@ -192,8 +210,8 @@ const csvCell = (v: string | number) => {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
 }
 
-function Backup() {
-  const { transactions, categories } = useStore()
+function Backup({ tool }: { tool: Tool }) {
+  const { transactions, categories, jobs } = useStore()
   const catName = new Map(categories.map((c) => [c.id, c.name]))
 
   const exportCsv = () => {
@@ -204,10 +222,22 @@ function Backup() {
     download(`ledger-${todayISO()}.csv`, rows.map((r) => r.map(csvCell).join(',')).join('\n'), 'text/csv')
   }
 
+  // Same columns as the original Google Sheet, so it can be pasted back there
+  const exportJobsCsv = () => {
+    const rows = [
+      ['No', 'Posisi', 'Perusahaan', 'Lokasi', 'Kategori', 'Fleksibilitas', 'Status', 'Platform', 'Link', 'Gaji Min', 'Gaji Max', 'Tgl Apply', 'Catatan'],
+      ...[...jobs].reverse().map((j, i) => [
+        i + 1, j.position, j.company, j.location ?? '', CATEGORY[j.category], FLEXIBILITY[j.flexibility], STATUS[j.status].label,
+        j.platform ?? '', j.link ?? '', j.salary_min ?? '', j.salary_max ?? '', j.applied_date, j.notes ?? '',
+      ]),
+    ]
+    download(`job-applications-${todayISO()}.csv`, rows.map((r) => r.map(csvCell).join(',')).join('\n'), 'text/csv')
+  }
+
   const exportJson = () =>
     download(
       `ledger-backup-${todayISO()}.json`,
-      JSON.stringify({ exportedAt: new Date().toISOString(), categories, transactions }, null, 2),
+      JSON.stringify({ exportedAt: new Date().toISOString(), categories, transactions, jobs }, null, 2),
       'application/json',
     )
 
@@ -218,9 +248,15 @@ function Backup() {
         Your data is stored online, but it is good to keep a copy. CSV opens in Excel or Google Sheets.
       </p>
       <div className="flex flex-wrap gap-3">
-        <Button variant="ghost" onClick={exportCsv} disabled={!transactions.length}>
-          <DownloadSimple size={16} /> Spreadsheet (CSV)
-        </Button>
+        {tool === 'budget' ? (
+          <Button variant="ghost" onClick={exportCsv} disabled={!transactions.length}>
+            <DownloadSimple size={16} /> Transactions (CSV)
+          </Button>
+        ) : (
+          <Button variant="ghost" onClick={exportJobsCsv} disabled={!jobs.length}>
+            <DownloadSimple size={16} /> Job applications (CSV)
+          </Button>
+        )}
         <Button variant="ghost" onClick={exportJson}>
           <DownloadSimple size={16} /> Full backup (JSON)
         </Button>

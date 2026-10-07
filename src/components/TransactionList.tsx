@@ -37,7 +37,7 @@ export function TransactionRow({ tx, index = 0 }: { tx: Transaction; index?: num
         <AnimatePresence>
           {fresh && (
             <motion.span
-              className="pointer-events-none absolute inset-0 rounded-[10px] bg-forest-soft"
+              className="pointer-events-none absolute inset-0 rounded-[10px] bg-accent-soft"
               initial={{ opacity: 0 }}
               animate={{ opacity: [0, 1, 1, 0], transition: { duration: 1.8, times: [0, 0.15, 0.6, 1] } }}
               exit={{ opacity: 0 }}

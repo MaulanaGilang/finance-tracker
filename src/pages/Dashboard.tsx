@@ -1,6 +1,7 @@
-import { useMemo, useState, type PointerEvent } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import { AnimatePresence, motion, useMotionValue, useSpring } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
+import { HeroPanel } from '../components/HeroPanel'
 import { ArrowRight, CalendarBlank, Receipt, Star, TrendDown, TrendUp } from '@phosphor-icons/react'
 import { CashflowChart, CategoryDonut, CategoryLegend, ChartLegend } from '../components/Charts'
 import { TransactionRow } from '../components/TransactionList'
@@ -90,7 +91,7 @@ export function Dashboard() {
         <Card>
           <CardTitle
             action={
-              <Link to="/transactions" className="group inline-flex items-center gap-1.5 text-[14px] text-forest">
+              <Link to="/budget/transactions" className="group inline-flex items-center gap-1.5 text-[14px] text-accent">
                 View all <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-0.5" />
               </Link>
             }
@@ -119,42 +120,6 @@ export function Dashboard() {
         </Card>
       </motion.div>
     </motion.div>
-  )
-}
-
-/**
- * The deep-forest balance panel. Ambient lights drift on their own; on devices with a mouse,
- * one extra soft light trails the pointer, like the glowing objects in Mercury's illustrations.
- */
-function HeroPanel({ children }: { children: React.ReactNode }) {
-  const x = useMotionValue(-400)
-  const y = useMotionValue(-400)
-  const sx = useSpring(x, { stiffness: 120, damping: 24, mass: 0.6 })
-  const sy = useSpring(y, { stiffness: 120, damping: 24, mass: 0.6 })
-  const finePointer = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
-
-  const onMove = (e: PointerEvent<HTMLElement>) => {
-    const r = e.currentTarget.getBoundingClientRect()
-    x.set(e.clientX - r.left - 160)
-    y.set(e.clientY - r.top - 160)
-  }
-
-  return (
-    <section
-      onPointerMove={finePointer ? onMove : undefined}
-      className="glow-panel group grid gap-6 rounded-[20px] p-6 sm:p-8 md:grid-cols-[1.3fr_1fr] md:items-end md:gap-10 md:p-10"
-    >
-      <span className="light drift" style={{ width: 340, height: 340, right: '-6%', top: '-55%', background: '#e9f1ea', opacity: 0.32, filter: 'blur(70px)' }} />
-      <span className="light drift-slow" style={{ width: 260, height: 260, left: '-8%', bottom: '-60%', background: '#9fc9ae', opacity: 0.4, filter: 'blur(60px)' }} />
-      <span className="light" style={{ width: 120, height: 120, right: '30%', bottom: '-20%', background: '#ffffff', opacity: 0.16, filter: 'blur(40px)' }} />
-      {finePointer && (
-        <motion.span
-          className="light left-0 top-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-          style={{ x: sx, y: sy, width: 320, height: 320, background: 'radial-gradient(circle, rgb(233 243 236 / 0.28) 0%, transparent 65%)' }}
-        />
-      )}
-      {children}
-    </section>
   )
 }
 
@@ -188,7 +153,7 @@ function InsightTile({ insight }: { insight: Insight }) {
   const Icon = INSIGHT_ICON[insight.kind]
   return (
     <div className="frost flex min-w-0 items-start gap-3.5 rounded-card border border-white/80 p-4 ring-1 ring-line/60 sm:p-5">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-forest-soft text-forest">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
         <Icon size={18} />
       </span>
       <div className="min-w-0">

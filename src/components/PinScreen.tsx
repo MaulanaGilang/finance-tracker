@@ -123,7 +123,7 @@ export function PinScreen() {
               transition={{ duration: 0.28, ease: EASE_OUT }}
               className={cx(
                 'size-3.5 rounded-full border transition-colors duration-150',
-                filled ? 'border-forest bg-forest' : 'border-line-strong bg-transparent',
+                filled ? 'border-accent bg-accent' : 'border-line-strong bg-transparent',
               )}
             />
           )

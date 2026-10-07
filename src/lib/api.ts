@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import type { Job, JobInput } from './jobs'
 
 export type TxType = 'income' | 'expense'
 
@@ -85,7 +86,17 @@ export const api = {
       }),
     ),
   deleteTransaction: (token: string, id: string) => rpc<void>('delete_transaction', { p_token: token, p_id: id }),
+
+  getJobs: async (token: string) => (await rpc<Job[]>('get_jobs', { p_token: token })).map(toJob),
+  saveJob: async (token: string, j: JobInput) => toJob(await rpc<Job>('save_job', { p_token: token, p_job: j })),
+  deleteJob: (token: string, id: string) => rpc<void>('delete_job', { p_token: token, p_id: id }),
 }
+
+const toJob = (j: Job): Job => ({
+  ...j,
+  salary_min: j.salary_min == null ? null : Number(j.salary_min),
+  salary_max: j.salary_max == null ? null : Number(j.salary_max),
+})
 
 export function friendlyError(e: unknown): string {
   const msg = e instanceof Error ? e.message : String(e)
