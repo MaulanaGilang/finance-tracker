@@ -4,13 +4,15 @@ import { Backspace } from '@phosphor-icons/react'
 import { EASE_OUT } from '../lib/motion'
 import { friendlyError } from '../lib/api'
 import { useStore } from '../lib/store'
-import { Logo } from './AppShell'
+import { Logo, useToolTheme } from './AppShell'
 import { Button, cx } from './ui'
 
 const LEN = 6
 
 export function PinScreen() {
   const { status, setupPin, unlock, reload } = useStore()
+  // Neutral lobby palette, even right after locking from inside a tool
+  useToolTheme(null)
   const isSetup = status === 'setup'
 
   const [pin, setPin] = useState('')

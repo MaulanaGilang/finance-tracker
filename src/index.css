@@ -85,6 +85,15 @@
   --orb-2: #e3ead2;
   --orb-3: #d6e6dc;
 }
+/* Lobby (intro, PIN, tool chooser): neutral Graphite, so only the tool cards carry colour */
+:root:not([data-tool]) {
+  --color-accent: #2b2d2a;
+  --color-accent-hover: #1d1f1c;
+  --color-accent-soft: #e6e6e1;
+  --orb-1: #e2e1da;
+  --orb-2: #eceae3;
+  --orb-3: #deddd6;
+}
 :root[data-tool="jobs"] {
   --color-accent: #2b3a7a;
   --color-accent-hover: #222f63;
