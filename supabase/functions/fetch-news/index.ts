@@ -121,13 +121,14 @@ Deno.serve(async (req) => {
 
   // On-demand: summarise one story the user just opened (no feed fetch, no throttle)
   if (body?.article_id) {
-    const { data: a } = await db.from('news_articles').select('id, url, title, details_status').eq('id', body.article_id).single()
+    const { data: a } = await db.from('news_articles').select('id, url, title, details_status, brief').eq('id', body.article_id).single()
     if (!a) return Response.json({ error: 'not found' }, { status: 404 })
-    if (a.details_status === 'pending') {
+    // Also redo stories summarised before the paragraph brief existed
+    if (a.details_status === 'pending' || (a.details_status === 'ok' && !a.brief)) {
       const s = await summarizeUrl(a.url, a.title).catch(() => null)
       await db.from('news_articles').update(s ? { ...s, details_status: 'ok' } : { details_status: 'failed' }).eq('id', a.id)
     }
-    const { data: updated } = await db.from('news_articles').select('id, key_points, word_count, details_status').eq('id', a.id).single()
+    const { data: updated } = await db.from('news_articles').select('id, key_points, brief, word_count, details_status').eq('id', a.id).single()
     return Response.json(updated)
   }
 

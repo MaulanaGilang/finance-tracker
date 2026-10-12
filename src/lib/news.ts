@@ -16,6 +16,8 @@ export interface NewsArticle {
   fetched_at: string
   /** 3-5 most informative sentences from the article body (extractive, not AI-written) */
   key_points: string[] | null
+  /** A longer read: about a third of the article's best sentences, grouped into paragraphs (also extractive) */
+  brief: string[] | null
   word_count: number | null
   details_status: 'pending' | 'ok' | 'failed'
 }
@@ -66,5 +68,21 @@ export const SOURCES = [
 ]
 
 /** Feed text should already be plain, but never render stray markup like <p> if a source slips some through */
+/** Paragraphs for the article page: the brief, or older key points grouped in threes, or the feed summary */
+export function storyParagraphs(a: NewsArticle): string[] {
+  if (a.brief?.length) return a.brief
+  const points = a.key_points ?? []
+  if (points.length) {
+    const out: string[] = []
+    for (let i = 0; i < points.length; i += 3) out.push(points.slice(i, i + 3).join(' '))
+    return out
+  }
+  const s = plainText(a.summary)
+  return s ? [s] : []
+}
+
+/** Needs (re)summarising: never done, or done before the paragraph brief existed */
+export const needsDetails = (a: NewsArticle) => a.details_status === 'pending' || (a.details_status === 'ok' && !a.brief)
+
 export const plainText = (s: string | null | undefined) =>
   (s ?? '').replace(/<[^>]+>/g, ' ').replace(/&lt;\/?[a-z][^&]*&gt;/gi, ' ').replace(/\s+/g, ' ').trim()

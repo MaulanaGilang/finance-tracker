@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, Suspense, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router'
 import { AnimatePresence, MotionConfig, motion } from 'motion/react'
@@ -17,11 +17,13 @@ import { Board } from './pages/jobs/Board'
 import { JobsDashboard } from './pages/jobs/JobsDashboard'
 import { NewsBriefing } from './pages/news/Briefing'
 import { NewsFeed } from './pages/news/Feed'
-import { NewsReader } from './components/news/Reader'
 import { Reports } from './pages/Reports'
 import { Settings } from './pages/Settings'
 import { ToolChooser } from './pages/ToolChooser'
 import { Transactions } from './pages/Transactions'
+
+// The story page carries the globe (d3-geo + atlases), so it loads only when a story is opened
+const NewsStory = lazy(() => import('./pages/news/Story').then((m) => ({ default: m.NewsStory })))
 
 /** Pages inside one tool: each page blurs out, the next focuses in */
 function ToolPages({ tool }: { tool: Tool }) {
@@ -50,6 +52,7 @@ function ToolPages({ tool }: { tool: Tool }) {
               <Route index element={<NewsBriefing />} />
               <Route path="feed" element={<NewsFeed />} />
               <Route path="saved" element={<NewsFeed savedOnly />} />
+              <Route path="story/:id" element={<Suspense fallback={<div className="skeleton h-[60dvh] w-full rounded-[20px]" />}><NewsStory /></Suspense>} />
               <Route path="settings" element={<Settings tool={tool} />} />
             </>
           )}
@@ -73,7 +76,7 @@ function ToolLayout({ tool }: { tool: Tool }) {
         </div>
       )}
       <ToolPages tool={tool} />
-      {tool === 'budget' ? <Composer /> : tool === 'jobs' ? <JobComposer /> : <NewsReader />}
+      {tool === 'budget' ? <Composer /> : tool === 'jobs' ? <JobComposer /> : null}
     </AppShell>
   )
 }

@@ -130,12 +130,12 @@ export function demoNews(): NewsArticle[] {
   const rows: [string, string, NewsArticle['topics'], number, number, string | null][] = [
     ['Central bank holds rates as inflation cools faster than expected', 'Demo Wire', ['central_banks'], 2, 5, 'Policymakers signalled cuts could come next quarter as price growth eased.'],
     ['Chipmaker shares jump on surging AI server demand', 'Demo Markets', ['semiconductors', 'ai'], 3, 4, 'Orders for high-bandwidth memory doubled year on year.'],
-    ['New tariffs on steel imports spark retaliation threats', 'Demo Wire', ['trade', 'geopolitics'], 5, 6, 'Trading partners warned of countermeasures on agricultural exports.'],
+    ['US tariffs on Chinese steel spark retaliation threats from Beijing', 'Demo Wire', ['trade', 'geopolitics'], 5, 6, 'Trading partners in the EU and Mexico warned of countermeasures on agricultural exports.'],
     ['Humanoid robot startup raises funding for factory pilots', 'Demo Tech', ['robotics'], 7, 1, 'The company plans pilots with two automotive suppliers.'],
     ['Oil climbs as supply talks stall', 'Demo Energy', ['energy', 'geopolitics'], 9, 4, 'Brent crude rose as producers failed to agree on output.'],
     ['Open-source AI model rivals larger systems on benchmarks', 'Demo Tech', ['ai'], 12, 0, null],
     ['Nickel prices slide on Indonesian output surge', 'Demo Markets', ['energy', 'trade'], 20, 3, 'Higher smelter output added to an already oversupplied market.'],
-    ['Leaders meet to ease tensions over shipping lanes', 'Demo Wire', ['geopolitics'], 30, 2, 'Insurers have raised premiums for vessels crossing the strait.'],
+    ['Japan, the Philippines and Australia meet to ease tensions over shipping lanes', 'Demo Wire', ['geopolitics'], 30, 2, 'Insurers have raised premiums for vessels crossing the strait.'],
   ]
   return rows.map(([title, source, topics, hoursAgo, market_score, summary], i) => ({
     id: i + 1, url: 'https://example.com/' + i, title, summary, source, image_url: null,
@@ -145,6 +145,12 @@ export function demoNews(): NewsArticle[] {
       'Analysts said the move had been widely expected, but the size of the change surprised some investors.',
       'Markets in Asia reacted first, with currencies and bond yields moving within minutes of the announcement.',
       'Officials signalled that further steps would depend on data released over the coming weeks.',
+    ],
+    // Longer demo read, grouped into paragraphs like the Edge Function's brief
+    brief: i === 5 ? null : [
+      `${summary ?? title} Analysts said the move had been widely expected, but the size of the change surprised some investors.`,
+      'Markets in Asia reacted first, with currencies and bond yields moving within minutes of the announcement. Traders said volumes were well above the monthly average, and several desks reported widening spreads in the first hour.',
+      'Officials signalled that further steps would depend on data released over the coming weeks. Economists expect the next set of figures to show whether the shift is lasting or a one-off.',
     ],
     word_count: 640 + i * 90,
     details_status: i === 5 ? 'failed' : 'ok',

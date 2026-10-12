@@ -101,7 +101,7 @@ export const api = {
   summarizeArticle: async (id: number) => {
     const { data, error } = await supabase.functions.invoke('fetch-news', { body: { article_id: id } })
     if (error) throw new ApiError(error.message)
-    return data as { id: number; key_points: string[] | null; word_count: number | null; details_status: 'pending' | 'ok' | 'failed' }
+    return data as { id: number; key_points: string[] | null; brief: string[] | null; word_count: number | null; details_status: 'pending' | 'ok' | 'failed' }
   },
   refreshNews: async () => {
     const { data, error } = await supabase.functions.invoke('fetch-news', { body: {} })

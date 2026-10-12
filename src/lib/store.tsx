@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useNavigate } from 'react-router'
 import { demoCategories, demoJobs, demoNews, demoReviews, demoSaveJob, demoTransactions, isDemo } from './demo'
-import type { NewsArticle } from './news'
+import { needsDetails, type NewsArticle } from './news'
 import { api, ApiError, type Category, type CategoryInput, type Transaction, type TransactionInput } from './api'
 import { normalizeCompany, reviewIndex, type CompanyReview, type Job, type JobInput } from './jobs'
 
@@ -31,10 +32,10 @@ interface Store {
   deleteJob: (id: string) => Promise<void>
   toggleNewsSaved: (a: NewsArticle) => Promise<void>
   refreshNews: () => Promise<string>
-  /** The story open in the reader sheet */
-  reading: NewsArticle | null
+  /** Go to the story's page */
   openArticle: (a: NewsArticle) => void
-  closeArticle: () => void
+  /** Summarise a story now if the background job hasn't (or did so before paragraph briefs existed) */
+  loadArticleDetails: (a: NewsArticle) => void
 
   composer: { open: boolean; editing: Transaction | null }
   /** id of the transaction just saved, briefly highlighted in lists */
@@ -79,8 +80,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [reviews, setReviews] = useState<CompanyReview[]>([])
   const [news, setNews] = useState<NewsArticle[]>([])
   const [newsRefreshing, setNewsRefreshing] = useState(false)
-  const [readingId, setReadingId] = useState<number | null>(null)
-  const reading = useMemo(() => news.find((a) => a.id === readingId) ?? null, [news, readingId])
+  const navigate = useNavigate()
   const [jobComposer, setJobComposer] = useState<{ open: boolean; editing: Job | null }>({ open: false, editing: null })
   const [composer, setComposer] = useState<{ open: boolean; editing: Transaction | null }>({
     open: false,
@@ -263,18 +263,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
       },
 
-      reading,
-      openArticle: (a) => {
-        setReadingId(a.id)
-        // Not summarised yet: do it now so the reader can fill in
-        if (a.details_status === 'pending' && !isDemo) {
-          api
-            .summarizeArticle(a.id)
-            .then((d) => setNews((prev) => prev.map((x) => (x.id === d.id ? { ...x, ...d } : x))))
-            .catch(() => setNews((prev) => prev.map((x) => (x.id === a.id ? { ...x, details_status: 'failed' } : x))))
-        }
+      openArticle: (a) => navigate(`/news/story/${a.id}`),
+      loadArticleDetails: (a) => {
+        if (!needsDetails(a) || isDemo) return
+        api
+          .summarizeArticle(a.id)
+          .then((d) => setNews((prev) => prev.map((x) => (x.id === d.id ? { ...x, ...d } : x))))
+          .catch(() => setNews((prev) => prev.map((x) => (x.id === a.id && x.details_status === 'pending' ? { ...x, details_status: 'failed' } : x))))
       },
-      closeArticle: () => setReadingId(null),
 
       composer,
       highlightId,
@@ -285,7 +281,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       openJobComposer: (editing) => setJobComposer({ open: true, editing: editing ?? null }),
       closeJobComposer: () => setJobComposer((c) => ({ ...c, open: false })),
     }),
-    [status, loading, loadError, categories, transactions, jobs, reviews, news, newsRefreshing, reading, composer, jobComposer, highlightId, token, guarded, load, resetToLock, startSession],
+    [status, loading, loadError, categories, transactions, jobs, reviews, news, newsRefreshing, navigate, composer, jobComposer, highlightId, token, guarded, load, resetToLock, startSession],
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

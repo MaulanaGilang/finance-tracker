@@ -52,8 +52,39 @@ const HOLD = '․'
 const protect = (s: string) => s.replace(ABBREV, (m) => m.replaceAll('.', HOLD))
 const restore = (s: string) => s.replaceAll(HOLD, '.')
 
+type Ranked = { text: string; para: number; idx: number; score: number }
+
 /** Pick up to `n` sentences that best represent the article, returned in reading order */
 export function keyPoints(title: string, paragraphs: string[], n = 5): string[] {
+  return rank(title, paragraphs)
+    .slice(0, n)
+    .sort((a, b) => a.idx - b.idx)
+    .map((s) => s.text)
+}
+
+/**
+ * A longer read: about a third of the article's best sentences (6-12), in reading order, grouped into
+ * short paragraphs. A new paragraph starts where the article itself moves on (a gap of a few source
+ * paragraphs) or after 3 sentences, so each one stays on a single thread.
+ */
+export function brief(title: string, paragraphs: string[]): string[] {
+  const ranked = rank(title, paragraphs)
+  if (ranked.length < 3) return []
+  const n = Math.min(12, Math.max(6, Math.round(ranked.length * 0.35)))
+  const picked = ranked.slice(0, n).sort((a, b) => a.idx - b.idx)
+  const groups: Ranked[][] = []
+  for (const s of picked) {
+    const cur = groups.at(-1)
+    if (cur && cur.length < 3 && s.para - cur.at(-1)!.para <= 2) cur.push(s)
+    else groups.push([s])
+  }
+  // A lone trailing sentence reads better joined to the paragraph before it
+  if (groups.length > 1 && groups.at(-1)!.length === 1) groups.at(-2)!.push(...groups.pop()!)
+  return groups.map((g) => g.map((s) => s.text).join(' '))
+}
+
+/** Every usable sentence, best first */
+function rank(title: string, paragraphs: string[]): Ranked[] {
   const sentences: { text: string; para: number; idx: number }[] = []
   paragraphs.slice(0, 40).forEach((p, para) => {
     for (const raw of protect(p).split(/(?<=[.!?]["”’]?)\s+(?=["“A-Z0-9])/)) {
@@ -78,11 +109,7 @@ export function keyPoints(title: string, paragraphs: string[], n = 5): string[] 
     return { ...s, score: centrality + titleOverlap * 2 + lead + quote }
   })
 
-  return scored
-    .sort((a, b) => b.score - a.score)
-    .slice(0, n)
-    .sort((a, b) => a.idx - b.idx)
-    .map((s) => s.text)
+  return scored.sort((a, b) => b.score - a.score)
 }
 
 /** Fetch one article and summarise it. Returns null when the page can't be read (paywall, block, no text). */
@@ -97,5 +124,5 @@ export async function summarizeUrl(url: string, title: string) {
   const points = keyPoints(title, paragraphs)
   if (points.length < 2) return null
   const wordCount = paragraphs.join(' ').split(/\s+/).length
-  return { key_points: points, word_count: wordCount }
+  return { key_points: points, brief: brief(title, paragraphs), word_count: wordCount }
 }
