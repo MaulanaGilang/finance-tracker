@@ -37,17 +37,35 @@
       "skillPath": "SKILL.md",
       "computedHash": "8c72fe148f51cc8aeea62172d44ec634ad7dbd4ebc19d6b5c85f5a9d8f9be8bc"
     },
+    "review-animations": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/review-animations/SKILL.md",
+      "computedHash": "8c2befeb28bb484bf2de7b2fc228774857e266d32a65d76895e78651a536d8cf"
+    },
     "supabase": {
       "source": "supabase/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/supabase/SKILL.md",
       "computedHash": "af1844ade632808fc0c15cf2db87daf3b2431c5262dc8a0c3ea7d70880fadf91"
     },
+    "threejs-animation": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-animation/SKILL.md",
+      "computedHash": "457900cae6babbe092e3226a2ac9ae5d09a84199c1b3d5050ed400d4f56a9d82"
+    },
     "ui-ux-pro-max": {
       "source": "nextlevelbuilder/ui-ux-pro-max-skill",
       "sourceType": "github",
       "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
       "computedHash": "7ac62d931e52dbc7c309ed8ee067101969db2454709339b02daa583e80e98d5f"
+    },
+    "vercel-react-view-transitions": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-view-transitions/SKILL.md",
+      "computedHash": "2033ef20681c90d4f93deee719e55e019c254e496d9bf80381c27cc539292001"
     },
     "web-design-guidelines": {
       "source": "vercel-labs/agent-skills",
