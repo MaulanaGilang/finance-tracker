@@ -1,23 +1,28 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { AnimatePresence } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
+import { EASE_OUT } from '../../lib/motion'
 import { MagnifyingGlass, TrendUp } from '@phosphor-icons/react'
 import { ArticleRow } from '../../components/news/Article'
 import { Card, Empty, PageHeader, cx, inputClass } from '../../components/ui'
-import { TOPICS, TOPIC_ORDER, isHighImpact, type NewsTopic } from '../../lib/news'
+import { GROUPS, GROUP_ORDER, TOPICS, inGroup, isHighImpact, type NewsGroup, type NewsTopic } from '../../lib/news'
 import { useStore } from '../../lib/store'
 
 /** Every story, newest first, filterable by topic / impact / search. With `savedOnly` it's the Saved page. */
 export function NewsFeed({ savedOnly = false }: { savedOnly?: boolean }) {
   const { news } = useStore()
   const [params, setParams] = useSearchParams()
+  const group = (params.get('group') as NewsGroup | null) ?? null
   const topic = (params.get('topic') as NewsTopic | null) ?? null
   const [impactOnly, setImpactOnly] = useState(false)
   const [query, setQuery] = useState('')
   const [limit, setLimit] = useState(40)
 
-  const setTopic = (t: NewsTopic | null) => {
+  // Group first (3 chips); a group's sub-topics appear as a second, optional row
+  const setFilter = (g: NewsGroup | null, t: NewsTopic | null = null) => {
     const next = new URLSearchParams(params)
+    if (g) next.set('group', g)
+    else next.delete('group')
     if (t) next.set('topic', t)
     else next.delete('topic')
     setParams(next, { replace: true })
@@ -29,17 +34,21 @@ export function NewsFeed({ savedOnly = false }: { savedOnly?: boolean }) {
     return news.filter(
       (a) =>
         (!savedOnly || a.saved) &&
+        (!group || inGroup(a, group)) &&
         (!topic || a.topics.includes(topic)) &&
         (!impactOnly || isHighImpact(a)) &&
         (!q || a.title.toLowerCase().includes(q) || (a.summary ?? '').toLowerCase().includes(q) || a.source.toLowerCase().includes(q)),
     )
-  }, [news, savedOnly, topic, impactOnly, query])
+  }, [news, savedOnly, group, topic, impactOnly, query])
 
   const chip = (active: boolean) =>
     cx(
       'inline-flex h-9 shrink-0 items-center gap-2 rounded-pill border px-3.5 text-[14px] transition-colors',
       active ? 'border-accent bg-accent-soft font-[480] text-accent' : 'border-line bg-card/70 text-ink hover:border-line-strong',
     )
+
+  const subChip = (active: boolean) =>
+    cx('inline-flex h-8 shrink-0 items-center rounded-pill px-3 text-[13px] transition-colors', active ? 'bg-ink text-canvas' : 'bg-raised text-muted hover:text-ink')
 
   return (
     <div>
@@ -55,19 +64,40 @@ export function NewsFeed({ savedOnly = false }: { savedOnly?: boolean }) {
         </div>
         {/* Topic chips scroll sideways on phones */}
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
-          <button className={chip(!topic)} onClick={() => setTopic(null)}>
-            All topics
+          <button className={chip(!group)} onClick={() => setFilter(null)}>
+            All news
           </button>
-          {TOPIC_ORDER.map((t) => (
-            <button key={t} className={chip(topic === t)} onClick={() => setTopic(topic === t ? null : t)} aria-pressed={topic === t}>
-              <span className="size-2 rounded-full" style={{ background: TOPICS[t].color }} />
-              {TOPICS[t].label}
+          {GROUP_ORDER.map((g) => (
+            <button key={g} className={chip(group === g)} onClick={() => setFilter(group === g ? null : g)} aria-pressed={group === g}>
+              <span className="size-2 rounded-full" style={{ background: GROUPS[g].color }} />
+              {GROUPS[g].label}
             </button>
           ))}
           <button className={chip(impactOnly)} onClick={() => setImpactOnly((v) => !v)} aria-pressed={impactOnly}>
             <TrendUp size={14} weight="bold" /> Market movers
           </button>
         </div>
+        <AnimatePresence initial={false}>
+          {group && (
+            <motion.div
+              key={group}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: EASE_OUT }}
+              className="-mx-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:flex-wrap md:px-0"
+            >
+              <button className={subChip(!topic)} onClick={() => setFilter(group)}>
+                Everything in {GROUPS[group].short}
+              </button>
+              {GROUPS[group].topics.map((t) => (
+                <button key={t} className={subChip(topic === t)} onClick={() => setFilter(group, topic === t ? null : t)} aria-pressed={topic === t}>
+                  {TOPICS[t].label}
+                </button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <p className="mb-3 px-1 text-[14px] text-muted">

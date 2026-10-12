@@ -14,6 +14,10 @@ export interface NewsArticle {
   market_score: number
   saved: boolean
   fetched_at: string
+  /** 3-5 most informative sentences from the article body (extractive, not AI-written) */
+  key_points: string[] | null
+  word_count: number | null
+  details_status: 'pending' | 'ok' | 'failed'
 }
 
 export const TOPICS: Record<NewsTopic, { label: string; short: string; color: string }> = {
@@ -26,6 +30,19 @@ export const TOPICS: Record<NewsTopic, { label: string; short: string; color: st
   semiconductors: { label: 'Semiconductors', short: 'Chips', color: '#6B7A99' },
 }
 export const TOPIC_ORDER = Object.keys(TOPICS) as NewsTopic[]
+
+/** The Feed and Briefing group the 7 topics into 3 */
+export type NewsGroup = 'tech' | 'economy' | 'world'
+export const GROUPS: Record<NewsGroup, { label: string; short: string; color: string; topics: NewsTopic[] }> = {
+  tech: { label: 'Tech & AI', short: 'Tech', color: '#5B4BA6', topics: ['ai', 'robotics', 'semiconductors'] },
+  economy: { label: 'Economy & Markets', short: 'Economy', color: '#B07A1F', topics: ['central_banks', 'energy'] },
+  world: { label: 'Geopolitics & Trade', short: 'World', color: '#9A3B2E', topics: ['geopolitics', 'trade'] },
+}
+export const GROUP_ORDER = Object.keys(GROUPS) as NewsGroup[]
+export const inGroup = (a: NewsArticle, g: NewsGroup) => a.topics.some((t) => GROUPS[g].topics.includes(t))
+
+/** About 220 words a minute */
+export const readMinutes = (words: number | null) => (words ? Math.max(1, Math.round(words / 220)) : null)
 
 /** Stories that mention several market-moving terms (inflation, tariffs, yields, oil prices...) */
 export const HIGH_IMPACT = 3

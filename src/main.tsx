@@ -17,6 +17,7 @@ import { Board } from './pages/jobs/Board'
 import { JobsDashboard } from './pages/jobs/JobsDashboard'
 import { NewsBriefing } from './pages/news/Briefing'
 import { NewsFeed } from './pages/news/Feed'
+import { NewsReader } from './components/news/Reader'
 import { Reports } from './pages/Reports'
 import { Settings } from './pages/Settings'
 import { ToolChooser } from './pages/ToolChooser'
@@ -72,7 +73,7 @@ function ToolLayout({ tool }: { tool: Tool }) {
         </div>
       )}
       <ToolPages tool={tool} />
-      {tool === 'budget' ? <Composer /> : tool === 'jobs' ? <JobComposer /> : null}
+      {tool === 'budget' ? <Composer /> : tool === 'jobs' ? <JobComposer /> : <NewsReader />}
     </AppShell>
   )
 }

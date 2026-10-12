@@ -140,5 +140,13 @@ export function demoNews(): NewsArticle[] {
   return rows.map(([title, source, topics, hoursAgo, market_score, summary], i) => ({
     id: i + 1, url: 'https://example.com/' + i, title, summary, source, image_url: null,
     published_at: new Date(Date.now() - hoursAgo * h).toISOString(), topics, market_score, saved: i === 1, fetched_at: new Date().toISOString(),
+    key_points: i === 5 ? null : [
+      `${title}.`,
+      'Analysts said the move had been widely expected, but the size of the change surprised some investors.',
+      'Markets in Asia reacted first, with currencies and bond yields moving within minutes of the announcement.',
+      'Officials signalled that further steps would depend on data released over the coming weeks.',
+    ],
+    word_count: 640 + i * 90,
+    details_status: i === 5 ? 'failed' : 'ok',
   }))
 }

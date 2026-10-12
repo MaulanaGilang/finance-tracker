@@ -27,7 +27,7 @@ export function ImpactBadge() {
 
 /** One story: source + time, headline (opens the original), short summary, topic tags, save toggle */
 export function ArticleRow({ article, index = 0, compact = false }: { article: NewsArticle; index?: number; compact?: boolean }) {
-  const { toggleNewsSaved } = useStore()
+  const { toggleNewsSaved, openArticle } = useStore()
   return (
     <motion.li
       layout="position"
@@ -42,11 +42,17 @@ export function ArticleRow({ article, index = 0, compact = false }: { article: N
             <span className="font-[480] text-ink">{article.source}</span>
             <span>{timeAgo(article.published_at)}</span>
           </p>
-          <a href={article.url} target="_blank" rel="noreferrer" className="block text-[15px] font-[480] leading-[1.35] text-ink decoration-accent/40 underline-offset-4 hover:underline sm:text-[16px]">
+          {/* Opens the in-app reader (key points); the original link lives inside it */}
+          <button
+            onClick={() => openArticle(article)}
+            className="block text-left text-[15px] font-[480] leading-[1.35] text-ink decoration-accent/40 underline-offset-4 hover:underline sm:text-[16px]"
+          >
             {article.title}
             <ArrowUpRight size={13} className="ml-1 inline -translate-y-px text-muted opacity-0 transition-opacity group-hover:opacity-100" />
-          </a>
-          {!compact && article.summary && <p className="mt-1.5 line-clamp-2 text-[14px] leading-[1.5] text-muted">{article.summary}</p>}
+          </button>
+          {!compact && (article.key_points?.[0] || article.summary) && (
+            <p className="mt-1.5 line-clamp-2 text-[14px] leading-[1.5] text-muted">{article.key_points?.[0] ?? article.summary}</p>
+          )}
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
             {isHighImpact(article) && <ImpactBadge />}
             {article.topics.map((t) => (

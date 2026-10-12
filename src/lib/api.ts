@@ -97,6 +97,12 @@ export const api = {
   getNews: (token: string) => rpc<NewsArticle[]>('get_news', { p_token: token, p_days: 14 }),
   setNewsSaved: (token: string, id: number, saved: boolean) => rpc<void>('set_news_saved', { p_token: token, p_id: id, p_saved: saved }),
   /** Ask the fetch-news Edge Function to pull feeds now (it skips if it ran in the last 10 minutes) */
+  /** Summarise one story now (when it was opened before the background job reached it) */
+  summarizeArticle: async (id: number) => {
+    const { data, error } = await supabase.functions.invoke('fetch-news', { body: { article_id: id } })
+    if (error) throw new ApiError(error.message)
+    return data as { id: number; key_points: string[] | null; word_count: number | null; details_status: 'pending' | 'ok' | 'failed' }
+  },
   refreshNews: async () => {
     const { data, error } = await supabase.functions.invoke('fetch-news', { body: {} })
     if (error) throw new ApiError(error.message)

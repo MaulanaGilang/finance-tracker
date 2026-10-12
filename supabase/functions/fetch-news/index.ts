@@ -1,7 +1,8 @@
 // Edge Function: fetch-news
 // Pulls free RSS/Atom feeds, tags each story with topics by keyword, scores how market-moving it is,
 // and upserts into public.news_articles. Called on a schedule (pg_cron) and by the app's refresh button.
-import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
+import { summarizeUrl } from './summarize.ts'
 
 type Topic = 'ai' | 'robotics' | 'geopolitics' | 'central_banks' | 'energy' | 'trade' | 'semiconductors'
 
@@ -92,13 +93,47 @@ function classify(title: string, summary: string, implied: Topic[]): Topic[] {
 // Event promos and ads that ride along in publisher feeds
 const PROMO = /TechCrunch (Disrupt|Sessions|events?)|\b(exhibit|tickets?|webinar|sponsored|register now|early.?bird)\b/i
 
-Deno.serve(async () => {
+/** Summarise pending stories, a few at a time (each needs its own page fetch) */
+async function summarizePending(db: SupabaseClient, limit: number) {
+  const { data: pending } = await db
+    .from('news_articles')
+    .select('id, url, title')
+    .eq('details_status', 'pending')
+    .order('published_at', { ascending: false })
+    .limit(limit)
+  let ok = 0
+  const queue = [...(pending ?? [])]
+  const worker = async () => {
+    for (let a = queue.shift(); a; a = queue.shift()) {
+      const s = await summarizeUrl(a.url, a.title).catch(() => null)
+      await db.from('news_articles').update(s ? { ...s, details_status: 'ok' } : { details_status: 'failed' }).eq('id', a.id)
+      if (s) ok++
+    }
+  }
+  await Promise.all(Array.from({ length: 6 }, worker))
+  return { summarized: ok, attempted: pending?.length ?? 0 }
+}
+
+Deno.serve(async (req) => {
   const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+  const body = await req.json().catch(() => ({}))
+
+  // On-demand: summarise one story the user just opened (no feed fetch, no throttle)
+  if (body?.article_id) {
+    const { data: a } = await db.from('news_articles').select('id, url, title, details_status').eq('id', body.article_id).single()
+    if (!a) return Response.json({ error: 'not found' }, { status: 404 })
+    if (a.details_status === 'pending') {
+      const s = await summarizeUrl(a.url, a.title).catch(() => null)
+      await db.from('news_articles').update(s ? { ...s, details_status: 'ok' } : { details_status: 'failed' }).eq('id', a.id)
+    }
+    const { data: updated } = await db.from('news_articles').select('id, key_points, word_count, details_status').eq('id', a.id).single()
+    return Response.json(updated)
+  }
 
   // Throttle: anyone holding the public key can call this, so skip if we fetched in the last 10 minutes
   const { data: last } = await db.from('news_articles').select('fetched_at').order('fetched_at', { ascending: false }).limit(1)
   if (last?.[0] && Date.now() - new Date(last[0].fetched_at).getTime() < 10 * 60 * 1000) {
-    return Response.json({ skipped: 'fetched less than 10 minutes ago' })
+    return Response.json({ skipped: 'fetched less than 10 minutes ago', ...(await summarizePending(db, 60)) })
   }
 
   const cutoff = Date.now() - 14 * 864e5
@@ -150,5 +185,6 @@ Deno.serve(async () => {
   // Keep the table small: drop unsaved stories older than 30 days
   await db.from('news_articles').delete().lt('published_at', new Date(Date.now() - 30 * 864e5).toISOString()).eq('saved', false)
 
-  return Response.json({ upserted, feeds: report })
+  const details = await summarizePending(db, 60)
+  return Response.json({ upserted, ...details, feeds: report })
 })
