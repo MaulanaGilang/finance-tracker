@@ -95,8 +95,8 @@ function ToolCard({
         className="glow-panel group flex min-h-[220px] flex-col justify-between rounded-[22px] p-6 outline-offset-4 sm:min-h-[260px] sm:p-8"
       >
         {/* Soft-focus light; brightens on hover */}
-        <span className="light drift transition-opacity duration-500 group-hover:opacity-60" style={{ width: 300, height: 300, right: '-12%', top: '-40%', background: glow, opacity: 0.35, filter: 'blur(60px)' }} />
-        <span className="light drift-slow" style={{ width: 220, height: 220, left: '-10%', bottom: '-45%', background: glow, opacity: 0.25, filter: 'blur(55px)' }} />
+        <span className="light drift transition-opacity duration-500 group-hover:opacity-60" style={{ width: 300, height: 300, right: '-12%', top: '-40%', background: glow, opacity: 0.35 }} />
+        <span className="light drift-slow" style={{ width: 220, height: 220, left: '-10%', bottom: '-45%', background: glow, opacity: 0.25 }} />
 
         <span className="glass-on-dark flex size-11 items-center justify-center rounded-full">{icon}</span>
         <div>

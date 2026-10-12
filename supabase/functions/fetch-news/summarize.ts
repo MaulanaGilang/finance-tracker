@@ -15,6 +15,7 @@ const decode = (s: string) =>
     .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
     .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)))
     .replace(/&quot;/g, '"').replace(/&apos;|&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+    .replace(/<[^>]+>/g, ' ') // feeds like The Guardian send escaped HTML (&lt;p&gt;)
     .replace(/&[lr]squo;/g, "'").replace(/&[lr]dquo;/g, '"').replace(/&mdash;/g, ' - ').replace(/&ndash;/g, '-').replace(/&hellip;/g, '...')
     .replace(/&[a-z]+;/gi, ' ')
     .replace(/\s+/g, ' ')

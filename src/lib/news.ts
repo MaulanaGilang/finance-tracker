@@ -64,3 +64,7 @@ export const SOURCES = [
   'BBC', 'The Guardian', 'CNBC', 'Al Jazeera', 'TechCrunch', 'MIT Technology Review',
   'IEEE Spectrum', 'Federal Reserve', 'ECB', 'OilPrice.com', 'Antara',
 ]
+
+/** Feed text should already be plain, but never render stray markup like <p> if a source slips some through */
+export const plainText = (s: string | null | undefined) =>
+  (s ?? '').replace(/<[^>]+>/g, ' ').replace(/&lt;\/?[a-z][^&]*&gt;/gi, ' ').replace(/\s+/g, ' ').trim()

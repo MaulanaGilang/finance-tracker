@@ -1,32 +1,31 @@
 import type { Transition, Variants } from 'motion/react'
 
 /*
-  Motion language: Mercury's soft focus. Things come INTO focus (blur → sharp),
-  rise a few pixels, and settle with a long ease-out. No bounce except tactile taps.
+  Motion language: calm and quick. Things fade in, rise a few pixels and settle with an ease-out.
+  Blur is kept for one-off moments only (intro, PIN dissolve): animating it on lists, pages or
+  large sheets makes phones drop frames. No bounce except tactile taps and sheets.
 */
 
 export const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
 export const soft: Transition = { duration: 0.45, ease: EASE_OUT }
 
-/** Page-level focus-in / out */
+/** Page-level enter / exit. Transform + opacity only: animating blur on a whole page is too costly on phones. */
 export const pageVariants: Variants = {
-  initial: { opacity: 0, y: 8, filter: 'blur(6px)' },
-  // transitionEnd drops the filter entirely: a lingering `blur(0px)` would still break the frosted
-  // backdrop-filter on cards inside and make this element the containing block for fixed children.
-  animate: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.4, ease: EASE_OUT }, transitionEnd: { filter: 'none' } },
-  exit: { opacity: 0, y: -4, filter: 'blur(4px)', transition: { duration: 0.18, ease: 'easeIn' } },
+  initial: { opacity: 0, y: 6 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.26, ease: EASE_OUT } },
+  exit: { opacity: 0, transition: { duration: 0.1, ease: 'easeIn' } },
 }
 
 /** Staggered children (lists, insight tiles) */
 export const listVariants: Variants = {
-  animate: { transition: { staggerChildren: 0.035, delayChildren: 0.05 } },
+  animate: { transition: { staggerChildren: 0.03, delayChildren: 0.02 } },
 }
 
 export const itemVariants: Variants = {
-  initial: { opacity: 0, y: 6, filter: 'blur(4px)' },
-  animate: { opacity: 1, y: 0, filter: 'blur(0px)', transition: soft, transitionEnd: { filter: 'none' } },
-  exit: { opacity: 0, height: 0, filter: 'blur(4px)', transition: { duration: 0.25, ease: EASE_OUT } },
+  initial: { opacity: 0, y: 6 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease: EASE_OUT } },
+  exit: { opacity: 0, height: 0, transition: { duration: 0.2, ease: EASE_OUT } },
 }
 
 /** Springs for things you physically touch */

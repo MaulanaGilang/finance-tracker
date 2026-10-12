@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { ArrowSquareOut, BookmarkSimple, Clock, X } from '@phosphor-icons/react'
 import { EASE_OUT, sheetSpring } from '../../lib/motion'
-import { readMinutes, timeAgo } from '../../lib/news'
+import { plainText, readMinutes, timeAgo } from '../../lib/news'
 import { useStore } from '../../lib/store'
 import { IconButton, cx } from '../ui'
 import { ImpactBadge, TopicTag } from './Article'
@@ -44,13 +44,13 @@ function ReaderSheet({ onClose }: { onClose: () => void }) {
         exit={{ opacity: 0, transition: { duration: 0.2 } }}
       />
       <motion.article
-        initial={wide ? { opacity: 0, scale: 0.97, y: 12, filter: 'blur(6px)' } : { y: '100%' }}
+        initial={wide ? { opacity: 0, scale: 0.97, y: 12 } : { y: '100%' }}
         animate={
           wide
-            ? { opacity: 1, scale: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.4, ease: EASE_OUT }, transitionEnd: { filter: 'none' } }
+            ? { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 420, damping: 34, mass: 0.8 } }
             : { y: 0, transition: sheetSpring }
         }
-        exit={wide ? { opacity: 0, scale: 0.98, filter: 'blur(4px)', transition: { duration: 0.2 } } : { y: '100%', transition: { duration: 0.25, ease: 'easeIn' } }}
+        exit={wide ? { opacity: 0, scale: 0.98, y: 6, transition: { duration: 0.16, ease: 'easeIn' } } : { y: '100%', transition: { duration: 0.25, ease: 'easeIn' } }}
         className="relative flex max-h-[92dvh] w-full flex-col overflow-y-auto rounded-t-[24px] bg-canvas/90 px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4 backdrop-blur-2xl sm:max-w-[640px] sm:rounded-card sm:border sm:border-line sm:p-8"
       >
         {/* Grab handle on phones */}
@@ -99,8 +99,8 @@ function ReaderSheet({ onClose }: { onClose: () => void }) {
               {points.map((p, i) => (
                 <motion.li
                   key={i}
-                  initial={{ opacity: 0, y: 6, filter: 'blur(4px)' }}
-                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.4, ease: EASE_OUT, delay: 0.08 + i * 0.06 }, transitionEnd: { filter: 'none' } }}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE_OUT, delay: 0.08 + i * 0.06 } }}
                   className="flex gap-3 text-[15px] leading-[1.6] sm:text-[16px]"
                 >
                   <span className="mt-[3px] flex size-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-[480] tabular-nums text-accent">
@@ -112,7 +112,7 @@ function ReaderSheet({ onClose }: { onClose: () => void }) {
             </ol>
           ) : (
             <div className="rounded-card bg-raised/70 px-4 py-3 text-[14px] leading-[1.55] text-muted">
-              {a.summary ? <p className="mb-2 text-ink">{a.summary}</p> : null}
+              {a.summary ? <p className="mb-2 text-ink">{plainText(a.summary)}</p> : null}
               This site doesn't allow previews (paywall or blocked), so only the feed summary is available.
             </div>
           )}
@@ -121,7 +121,7 @@ function ReaderSheet({ onClose }: { onClose: () => void }) {
         {points.length > 0 && a.summary && !points.some((p) => p.startsWith(a.summary!.slice(0, 40))) && (
           <section className="mb-6 rounded-card bg-raised/60 px-4 py-3">
             <h3 className="mb-1 text-[12px] font-[480] text-muted">From the feed</h3>
-            <p className="text-[14px] leading-[1.55]">{a.summary}</p>
+            <p className="text-[14px] leading-[1.55]">{plainText(a.summary)}</p>
           </section>
         )}
 

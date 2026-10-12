@@ -17,16 +17,13 @@ export function TransactionRow({ tx, index = 0 }: { tx: Transaction; index?: num
 
   return (
     <motion.li
-      layout="position"
-      initial={{ opacity: 0, y: 6, filter: 'blur(4px)' }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{
         opacity: 1,
         y: 0,
-        filter: 'blur(0px)',
-        transition: { duration: 0.45, ease: EASE_OUT, delay: Math.min(index, 10) * 0.035 },
-        transitionEnd: { filter: 'none' },
+        transition: { duration: 0.28, ease: EASE_OUT, delay: Math.min(index, 8) * 0.02 },
       }}
-      exit={{ opacity: 0, height: 0, filter: 'blur(4px)', transition: { duration: 0.28, ease: EASE_OUT } }}
+      exit={{ opacity: 0, height: 0, transition: { duration: 0.28, ease: EASE_OUT } }}
       className="overflow-hidden"
     >
       <button
@@ -82,7 +79,6 @@ export function GroupedTransactions({ items }: { items: Transaction[] }) {
           return (
             <motion.section
               key={date}
-              layout="position"
               exit={{ opacity: 0, height: 0, transition: { duration: 0.28, ease: EASE_OUT } }}
               className="overflow-hidden"
             >

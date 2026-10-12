@@ -213,9 +213,8 @@ function TableRow({ job, index }: { job: Job; index: number }) {
 
   return (
     <motion.li
-      layout="position"
-      initial={{ opacity: 0, y: 6, filter: 'blur(4px)' }}
-      animate={{ opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.4, ease: EASE_OUT, delay: Math.min(index, 12) * 0.025 }, transitionEnd: { filter: 'none' } }}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0, transition: { duration: 0.28, ease: EASE_OUT, delay: Math.min(index, 8) * 0.02 } }}
       exit={{ opacity: 0, height: 0, transition: { duration: 0.25, ease: EASE_OUT } }}
       className="overflow-hidden"
     >

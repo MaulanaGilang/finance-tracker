@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { X } from '@phosphor-icons/react'
-import { EASE_OUT, sheetSpring } from '../lib/motion'
+import { sheetSpring } from '../lib/motion'
 import { IconButton, cx } from './ui'
 
 const isWide = () => typeof window !== 'undefined' && window.matchMedia('(min-width: 640px)').matches
@@ -46,13 +46,13 @@ export function Sheet({
       />
       <motion.form
         onSubmit={onSubmit}
-        initial={wide ? { opacity: 0, scale: 0.97, y: 12, filter: 'blur(6px)' } : { y: '100%' }}
+        initial={wide ? { opacity: 0, scale: 0.97, y: 12 } : { y: '100%' }}
         animate={
           wide
-            ? { opacity: 1, scale: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.4, ease: EASE_OUT }, transitionEnd: { filter: 'none' } }
+            ? { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 420, damping: 34, mass: 0.8 } }
             : { y: 0, transition: sheetSpring }
         }
-        exit={wide ? { opacity: 0, scale: 0.98, filter: 'blur(4px)', transition: { duration: 0.2 } } : { y: '100%', transition: { duration: 0.25, ease: 'easeIn' } }}
+        exit={wide ? { opacity: 0, scale: 0.98, y: 6, transition: { duration: 0.16, ease: 'easeIn' } } : { y: '100%', transition: { duration: 0.25, ease: 'easeIn' } }}
         className={cx(
           'relative flex max-h-[92dvh] w-full flex-col overflow-y-auto rounded-t-[24px] bg-canvas/85 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 backdrop-blur-2xl sm:rounded-card sm:border sm:border-line sm:p-8',
           maxWidth,

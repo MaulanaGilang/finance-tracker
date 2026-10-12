@@ -1,7 +1,7 @@
 import { motion } from 'motion/react'
 import { ArrowUpRight, BookmarkSimple, TrendUp } from '@phosphor-icons/react'
 import { EASE_OUT } from '../../lib/motion'
-import { TOPICS, isHighImpact, timeAgo, type NewsArticle, type NewsTopic } from '../../lib/news'
+import { TOPICS, isHighImpact, plainText, timeAgo, type NewsArticle, type NewsTopic } from '../../lib/news'
 import { useStore } from '../../lib/store'
 import { cx } from '../ui'
 
@@ -30,9 +30,8 @@ export function ArticleRow({ article, index = 0, compact = false }: { article: N
   const { toggleNewsSaved, openArticle } = useStore()
   return (
     <motion.li
-      layout="position"
-      initial={{ opacity: 0, y: 6, filter: 'blur(4px)' }}
-      animate={{ opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.4, ease: EASE_OUT, delay: Math.min(index, 12) * 0.03 }, transitionEnd: { filter: 'none' } }}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0, transition: { duration: 0.28, ease: EASE_OUT, delay: Math.min(index, 8) * 0.02 } }}
       exit={{ opacity: 0, height: 0, transition: { duration: 0.25 } }}
       className="group relative overflow-hidden rounded-[12px] px-2 py-3.5 transition-colors hover:bg-raised/70 sm:px-3"
     >
@@ -51,7 +50,7 @@ export function ArticleRow({ article, index = 0, compact = false }: { article: N
             <ArrowUpRight size={13} className="ml-1 inline -translate-y-px text-muted opacity-0 transition-opacity group-hover:opacity-100" />
           </button>
           {!compact && (article.key_points?.[0] || article.summary) && (
-            <p className="mt-1.5 line-clamp-2 text-[14px] leading-[1.5] text-muted">{article.key_points?.[0] ?? article.summary}</p>
+            <p className="mt-1.5 line-clamp-2 text-[14px] leading-[1.5] text-muted">{article.key_points?.[0] ?? plainText(article.summary)}</p>
           )}
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
             {isHighImpact(article) && <ImpactBadge />}
