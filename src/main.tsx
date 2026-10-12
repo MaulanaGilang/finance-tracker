@@ -15,6 +15,8 @@ import { Dashboard } from './pages/Dashboard'
 import { Applications } from './pages/jobs/Applications'
 import { Board } from './pages/jobs/Board'
 import { JobsDashboard } from './pages/jobs/JobsDashboard'
+import { NewsBriefing } from './pages/news/Briefing'
+import { NewsFeed } from './pages/news/Feed'
 import { Reports } from './pages/Reports'
 import { Settings } from './pages/Settings'
 import { ToolChooser } from './pages/ToolChooser'
@@ -35,11 +37,18 @@ function ToolPages({ tool }: { tool: Tool }) {
               <Route path="reports" element={<Reports />} />
               <Route path="settings" element={<Settings tool={tool} />} />
             </>
-          ) : (
+          ) : tool === 'jobs' ? (
             <>
               <Route index element={<JobsDashboard />} />
               <Route path="applications" element={<Applications />} />
               <Route path="board" element={<Board />} />
+              <Route path="settings" element={<Settings tool={tool} />} />
+            </>
+          ) : (
+            <>
+              <Route index element={<NewsBriefing />} />
+              <Route path="feed" element={<NewsFeed />} />
+              <Route path="saved" element={<NewsFeed savedOnly />} />
               <Route path="settings" element={<Settings tool={tool} />} />
             </>
           )}
@@ -63,7 +72,7 @@ function ToolLayout({ tool }: { tool: Tool }) {
         </div>
       )}
       <ToolPages tool={tool} />
-      {tool === 'budget' ? <Composer /> : <JobComposer />}
+      {tool === 'budget' ? <Composer /> : tool === 'jobs' ? <JobComposer /> : null}
     </AppShell>
   )
 }
@@ -85,6 +94,7 @@ function Spaces() {
           <Route path="/" element={<ToolChooser />} />
           <Route path="/budget/*" element={<ToolLayout tool="budget" />} />
           <Route path="/jobs/*" element={<ToolLayout tool="jobs" />} />
+          <Route path="/news/*" element={<ToolLayout tool="news" />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </motion.div>

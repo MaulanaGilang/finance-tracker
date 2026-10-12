@@ -15,7 +15,8 @@ import {
   type JobFlexibility,
   type JobStatus,
 } from '../../lib/jobs'
-import { useStore } from '../../lib/store'
+import { useCompanyReview, useStore } from '../../lib/store'
+import { CompanyReviewPanel } from './CompanyReview'
 import { Sheet } from '../Sheet'
 import { Button, Field, Segmented, cx, inputClass, selectClass } from '../ui'
 import { StatusRing } from './Status'
@@ -34,6 +35,7 @@ export function JobComposer() {
 function JobSheet({ onClose }: { onClose: () => void }) {
   const { jobComposer, jobs, saveJob, deleteJob } = useStore()
   const editing = jobComposer.editing
+  const review = useCompanyReview(editing?.company ?? '')
 
   const [position, setPosition] = useState(editing?.position ?? '')
   const [company, setCompany] = useState(editing?.company ?? '')
@@ -108,6 +110,7 @@ function JobSheet({ onClose }: { onClose: () => void }) {
   return (
     <Sheet title={editing ? 'Edit application' : 'New application'} onClose={onClose} onSubmit={save} maxWidth="sm:max-w-[560px]">
       <div className="flex flex-col gap-5">
+        {editing && <CompanyReviewPanel review={review} company={editing.company} />}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Position" htmlFor="j-position">
             <input id="j-position" autoFocus={!editing} required value={position} onChange={(e) => setPosition(e.target.value)} placeholder="Data Engineer" className={inputClass} />

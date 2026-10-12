@@ -2,7 +2,11 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink } from 'react-router'
 import { AnimatePresence, motion } from 'motion/react'
 import {
+  ArrowsClockwise,
   ArrowsLeftRight,
+  BookmarkSimple,
+  Newspaper,
+  Rows,
   Briefcase,
   ChartBar,
   GearSix,
@@ -17,11 +21,12 @@ import { pillSpring } from '../lib/motion'
 import { useStore } from '../lib/store'
 import { cx } from './ui'
 
-export type Tool = 'budget' | 'jobs'
+export type Tool = 'budget' | 'jobs' | 'news'
 
 export const TOOLS = {
   budget: { name: 'Budget', icon: Wallet, home: '/budget' },
   jobs: { name: 'Job Applications', icon: Briefcase, home: '/jobs' },
+  news: { name: 'News', icon: Newspaper, home: '/news' },
 } as const
 
 const NAV = {
@@ -36,6 +41,12 @@ const NAV = {
     { to: '/jobs/applications', label: 'Applications', mobile: 'List', icon: Table },
     { to: '/jobs/board', label: 'Board', mobile: 'Board', icon: Kanban },
     { to: '/jobs/settings', label: 'Settings', mobile: 'Settings', icon: GearSix },
+  ],
+  news: [
+    { to: '/news', label: 'Briefing', mobile: 'Briefing', icon: SquaresFour },
+    { to: '/news/feed', label: 'Feed', mobile: 'Feed', icon: Rows },
+    { to: '/news/saved', label: 'Saved', mobile: 'Saved', icon: BookmarkSimple },
+    { to: '/news/settings', label: 'Settings', mobile: 'Settings', icon: GearSix },
   ],
 } as const
 
@@ -82,10 +93,12 @@ function ToolSwitch({ tool }: { tool: Tool }) {
 }
 
 export function AppShell({ tool, children }: { tool: Tool; children: ReactNode }) {
-  const { openComposer, openJobComposer } = useStore()
+  const { openComposer, openJobComposer, refreshNews, newsRefreshing } = useStore()
   useToolTheme(tool)
   const nav = NAV[tool]
-  const add = () => (tool === 'jobs' ? openJobComposer() : openComposer())
+  // The primary action per tool: add a transaction, add an application, or pull fresh news
+  const add = () => (tool === 'jobs' ? openJobComposer() : tool === 'news' ? void refreshNews().catch(() => {}) : openComposer())
+  const isNews = tool === 'news'
 
   return (
     <div className="min-h-[100dvh]">
@@ -119,8 +132,8 @@ export function AppShell({ tool, children }: { tool: Tool; children: ReactNode }
             whileTap={{ scale: 0.97 }}
             className="glow-button inline-flex h-10 items-center gap-2 rounded-pill bg-accent px-5 text-[15px] text-white"
           >
-            <Plus size={16} weight="bold" />
-            Add
+            {isNews ? <ArrowsClockwise size={16} weight="bold" className={newsRefreshing ? 'animate-spin' : undefined} /> : <Plus size={16} weight="bold" />}
+            {isNews ? (newsRefreshing ? 'Refreshing' : 'Refresh') : 'Add'}
           </motion.button>
         </div>
       </header>
@@ -145,7 +158,7 @@ export function AppShell({ tool, children }: { tool: Tool; children: ReactNode }
             <TabLink key={item.to} item={item} end={item.to === TOOLS[tool].home} />
           ))}
           <div className="flex justify-center">
-            <AddFab onClick={add} label={tool === 'jobs' ? 'Add application' : 'Add transaction'} />
+            <AddFab onClick={add} label={tool === 'jobs' ? 'Add application' : isNews ? 'Refresh news' : 'Add transaction'} icon={isNews ? <ArrowsClockwise size={22} weight="bold" className={newsRefreshing ? 'animate-spin' : undefined} /> : undefined} />
           </div>
           {nav.slice(2).map((item) => (
             <TabLink key={item.to} item={item} end={item.to === TOOLS[tool].home} />
@@ -157,7 +170,7 @@ export function AppShell({ tool, children }: { tool: Tool; children: ReactNode }
 }
 
 /** Centre + button: presses in, and a soft ring ripples out on each tap */
-function AddFab({ onClick, label }: { onClick: () => void; label: string }) {
+function AddFab({ onClick, label, icon }: { onClick: () => void; label: string; icon?: ReactNode }) {
   const [pulse, setPulse] = useState(0)
   return (
     <motion.button
@@ -182,7 +195,7 @@ function AddFab({ onClick, label }: { onClick: () => void; label: string }) {
           />
         )}
       </AnimatePresence>
-      <Plus size={22} weight="bold" />
+      {icon ?? <Plus size={22} weight="bold" />}
     </motion.button>
   )
 }

@@ -1,6 +1,7 @@
 import type { Category, Transaction } from './api'
-import type { Job, JobCategory, JobFlexibility, JobInput, JobStatus } from './jobs'
+import type { CompanyReview, Job, JobCategory, JobFlexibility, JobInput, JobStatus } from './jobs'
 import { STATUS } from './jobs'
+import type { NewsArticle } from './news'
 import { addMonths, currentMonth } from './format'
 
 /** Dev-only: http://localhost:5173/?demo renders the app on in-memory sample data, no network. */
@@ -106,4 +107,38 @@ export function demoSaveJob(jobs: Job[], input: JobInput): Job {
     max_stage: Math.max(prev?.max_stage ?? 0, stage),
     updated_at: now,
   } as Job
+}
+
+/** Fictional reviews for demo companies: one rich, one "nothing found" */
+export function demoReviews(): CompanyReview[] {
+  return [
+    {
+      company_key: 'kirana logistik', aliases: [], display_name: 'Kirana Logistik', rating: 4.2, rating_source: 'JobStreet', review_count: 87, recommend_pct: 81,
+      pros: ['Supportive team leads', 'Good training for new hires', 'Clear overtime pay'], cons: ['Slow promotions', 'Busy peak seasons'],
+      notes: 'Fictional demo data.', sources: [{ label: 'Example source', url: 'https://example.com' }], researched_at: '2026-10-12',
+    },
+    {
+      company_key: 'cakra telco', aliases: [], display_name: 'Cakra Telco', rating: null, rating_source: null, review_count: null, recommend_pct: null,
+      pros: [], cons: [], notes: 'No reliable reviews found (demo).', sources: [], researched_at: '2026-10-12',
+    },
+  ]
+}
+
+/** Fictional demo headlines across topics (never shown with real data) */
+export function demoNews(): NewsArticle[] {
+  const h = 3600e3
+  const rows: [string, string, NewsArticle['topics'], number, number, string | null][] = [
+    ['Central bank holds rates as inflation cools faster than expected', 'Demo Wire', ['central_banks'], 2, 5, 'Policymakers signalled cuts could come next quarter as price growth eased.'],
+    ['Chipmaker shares jump on surging AI server demand', 'Demo Markets', ['semiconductors', 'ai'], 3, 4, 'Orders for high-bandwidth memory doubled year on year.'],
+    ['New tariffs on steel imports spark retaliation threats', 'Demo Wire', ['trade', 'geopolitics'], 5, 6, 'Trading partners warned of countermeasures on agricultural exports.'],
+    ['Humanoid robot startup raises funding for factory pilots', 'Demo Tech', ['robotics'], 7, 1, 'The company plans pilots with two automotive suppliers.'],
+    ['Oil climbs as supply talks stall', 'Demo Energy', ['energy', 'geopolitics'], 9, 4, 'Brent crude rose as producers failed to agree on output.'],
+    ['Open-source AI model rivals larger systems on benchmarks', 'Demo Tech', ['ai'], 12, 0, null],
+    ['Nickel prices slide on Indonesian output surge', 'Demo Markets', ['energy', 'trade'], 20, 3, 'Higher smelter output added to an already oversupplied market.'],
+    ['Leaders meet to ease tensions over shipping lanes', 'Demo Wire', ['geopolitics'], 30, 2, 'Insurers have raised premiums for vessels crossing the strait.'],
+  ]
+  return rows.map(([title, source, topics, hoursAgo, market_score, summary], i) => ({
+    id: i + 1, url: 'https://example.com/' + i, title, summary, source, image_url: null,
+    published_at: new Date(Date.now() - hoursAgo * h).toISOString(), topics, market_score, saved: i === 1, fetched_at: new Date().toISOString(),
+  }))
 }

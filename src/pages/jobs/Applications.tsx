@@ -19,7 +19,8 @@ import {
   type JobStatus,
 } from '../../lib/jobs'
 import { EASE_OUT } from '../../lib/motion'
-import { useStore } from '../../lib/store'
+import { useCompanyReview, useStore } from '../../lib/store'
+import { RatingChip } from '../../components/jobs/CompanyReview'
 
 type Sort = 'applied' | 'updated' | 'company'
 
@@ -208,6 +209,7 @@ function TableRow({ job, index }: { job: Job; index: number }) {
   const ghostIn = daysUntilGhost(job)
   const quiet = ghostIn !== null && ghostIn <= 4
   const salary = salaryLabel(job)
+  const review = useCompanyReview(job.company)
 
   return (
     <motion.li
@@ -228,7 +230,10 @@ function TableRow({ job, index }: { job: Job; index: number }) {
         )}
       >
         <div className="min-w-0">
-          <p className="truncate text-[15px] font-[440]">{job.company}</p>
+          <p className="flex min-w-0 items-center gap-2">
+            <span className="truncate text-[15px] font-[440]">{job.company}</span>
+            <RatingChip review={review} className="shrink-0" />
+          </p>
           <p className="truncate text-[13px] text-muted">
             {job.position}
             {job.location && <span className="lg:hidden"> · {job.location}</span>}

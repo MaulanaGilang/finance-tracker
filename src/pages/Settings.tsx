@@ -5,6 +5,7 @@ import type { Category, TxType } from '../lib/api'
 import { friendlyError } from '../lib/api'
 import { todayISO } from '../lib/format'
 import { CATEGORY, FLEXIBILITY, GHOST_DAYS, STATUS } from '../lib/jobs'
+import { SOURCES } from '../lib/news'
 import { useStore } from '../lib/store'
 import type { Tool } from '../components/AppShell'
 
@@ -24,6 +25,7 @@ export function Settings({ tool }: { tool: Tool }) {
           <CategoryManager type="income" />
         </div>
       )}
+      {tool === 'news' && <NewsSources />}
       {tool === 'jobs' && (
         <Card>
           <CardTitle>Ghost rule</CardTitle>
@@ -252,11 +254,11 @@ function Backup({ tool }: { tool: Tool }) {
           <Button variant="ghost" onClick={exportCsv} disabled={!transactions.length}>
             <DownloadSimple size={16} /> Transactions (CSV)
           </Button>
-        ) : (
+        ) : tool === 'jobs' ? (
           <Button variant="ghost" onClick={exportJobsCsv} disabled={!jobs.length}>
             <DownloadSimple size={16} /> Job applications (CSV)
           </Button>
-        )}
+        ) : null}
         <Button variant="ghost" onClick={exportJson}>
           <DownloadSimple size={16} /> Full backup (JSON)
         </Button>
@@ -317,6 +319,53 @@ function Security() {
           <LockSimple size={16} /> Lock this device
         </Button>
       </div>
+    </Card>
+  )
+}
+
+/** News: where stories come from, how topics are assigned, and a manual refresh */
+function NewsSources() {
+  const { refreshNews, newsRefreshing } = useStore()
+  const [msg, setMsg] = useState<string | null>(null)
+  return (
+    <Card>
+      <CardTitle
+        action={
+          <Button
+            variant="ghost"
+            className="h-9 px-4 text-[14px]"
+            disabled={newsRefreshing}
+            onClick={async () => {
+              try {
+                setMsg(await refreshNews())
+              } catch (e) {
+                setMsg(friendlyError(e))
+              }
+            }}
+          >
+            {newsRefreshing ? 'Refreshing…' : 'Refresh now'}
+          </Button>
+        }
+      >
+        Sources
+      </CardTitle>
+      <p className="mb-4 max-w-[62ch] text-[14px] leading-[1.6] text-muted">
+        Headlines are pulled from free RSS feeds every 2 hours and tagged by keyword into 7 topics. A story only gets a topic when its
+        headline mentions it, or its summary mentions it more than once. "Market mover" means the story mentions several market-moving
+        terms such as inflation, tariffs, yields or oil prices. Unsaved stories are removed after 30 days.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {SOURCES.map((s) => (
+          <span key={s} className="rounded-pill bg-raised px-3 py-1 text-[13px]">
+            {s}
+          </span>
+        ))}
+      </div>
+      {msg && (
+        <p className="mt-4 text-[14px] text-muted" role="status">
+          {msg}
+        </p>
+      )}
     </Card>
   )
 }

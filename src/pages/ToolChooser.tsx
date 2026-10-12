@@ -1,10 +1,11 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router'
 import { motion } from 'motion/react'
-import { ArrowRight, Briefcase, LockSimple, Wallet } from '@phosphor-icons/react'
+import { ArrowRight, Briefcase, LockSimple, Newspaper, Wallet } from '@phosphor-icons/react'
 import { Logo, useToolTheme } from '../components/AppShell'
 import { formatIDR, currentMonth } from '../lib/format'
 import { goingQuiet, jobKpis } from '../lib/jobs'
+import { isHighImpact, within } from '../lib/news'
 import { EASE_OUT, itemVariants, listVariants } from '../lib/motion'
 import { inMonth, totals } from '../lib/stats'
 import { useStore } from '../lib/store'
@@ -16,15 +17,17 @@ const greeting = () => {
 
 /** After the PIN: pick a tool. Each card glows in its own tool color (Arc-style spaces). */
 export function ToolChooser() {
-  const { transactions, jobs, lock } = useStore()
+  const { transactions, jobs, news, lock } = useStore()
   useToolTheme(null)
 
   const net = totals(inMonth(transactions, currentMonth())).net
   const k = jobKpis(jobs)
   const quiet = goingQuiet(jobs).length
+  const today = news.filter((a) => within(a.published_at, 24))
+  const movers = today.filter(isHighImpact).length
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-[1000px] flex-col px-4 pb-10 pt-[max(1rem,env(safe-area-inset-top))] md:px-8">
+    <div className="mx-auto flex min-h-[100dvh] max-w-[1200px] flex-col px-4 pb-10 pt-[max(1rem,env(safe-area-inset-top))] md:px-8">
       <header className="flex h-16 items-center justify-between">
         <Logo />
         <button onClick={() => lock()} className="inline-flex items-center gap-2 rounded-pill px-3 py-2 text-[14px] text-muted transition-colors hover:bg-raised hover:text-ink">
@@ -38,7 +41,7 @@ export function ToolChooser() {
           <h1 className="font-display text-[32px] leading-[1.15] sm:text-[42px]">What are we tracking?</h1>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+        <motion.div variants={itemVariants} className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
           <ToolCard
             to="/budget"
             icon={<Wallet size={22} />}
@@ -54,6 +57,14 @@ export function ToolChooser() {
             body="Pipeline, follow-ups and responses."
             stat={`${k.active} active${quiet ? ` · ${quiet} going quiet` : ''}`}
             palette={{ '--panel-1': '#3c4c96', '--panel-2': '#2b3a7a', '--panel-3': '#1c2654', glow: '#d6ddf6' }}
+          />
+          <ToolCard
+            to="/news"
+            icon={<Newspaper size={22} />}
+            title="News"
+            body="AI, robotics, geopolitics and the markets."
+            stat={`${today.length} today${movers ? ` · ${movers} market movers` : ''}`}
+            palette={{ '--panel-1': '#8a3a46', '--panel-2': '#6e2a35', '--panel-3': '#4a1a22', glow: '#f3d9dd' }}
           />
         </motion.div>
       </motion.main>

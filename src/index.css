@@ -85,6 +85,17 @@
   --orb-2: #e3ead2;
   --orb-3: #d6e6dc;
 }
+:root[data-tool="news"] {
+  --color-accent: #6e2a35;
+  --color-accent-hover: #57202a;
+  --color-accent-soft: #f1e2e4;
+  --panel-1: #8a3a46;
+  --panel-2: #6e2a35;
+  --panel-3: #4a1a22;
+  --orb-1: #ecd9db;
+  --orb-2: #efe4dc;
+  --orb-3: #e8dadd;
+}
 /* Lobby (intro, PIN, tool chooser): neutral Graphite, so only the tool cards carry colour */
 :root:not([data-tool]) {
   --color-accent: #2b2d2a;

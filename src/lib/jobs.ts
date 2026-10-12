@@ -291,3 +291,31 @@ export function salaryLabel(j: Pick<Job, 'salary_min' | 'salary_max'>): string |
   if (j.salary_min && j.salary_max && j.salary_min !== j.salary_max) return `${formatJuta(j.salary_min)} - ${formatJuta(j.salary_max)}`
   return formatJuta((j.salary_min ?? j.salary_max)!)
 }
+
+// ---------------------------------------------------------------------------
+// Company reviews (researched and stored in company_reviews)
+
+export interface CompanyReview {
+  company_key: string
+  aliases: string[]
+  display_name: string
+  rating: number | null
+  rating_source: string | null
+  review_count: number | null
+  recommend_pct: number | null
+  pros: string[]
+  cons: string[]
+  notes: string | null
+  sources: { label: string; url: string }[]
+  researched_at: string
+}
+
+/** "PT Sarimelati Kencana Tbk" -> "sarimelati kencana tbk"; same rule as the SQL used to verify matches */
+export const normalizeCompany = (name: string) =>
+  name.toLowerCase().replace(/^pt\.?\s+/, '').replace(/[^a-z0-9]+/g, ' ').trim()
+
+export function reviewIndex(reviews: CompanyReview[]) {
+  const map = new Map<string, CompanyReview>()
+  for (const r of reviews) for (const k of [r.company_key, ...r.aliases]) map.set(normalizeCompany(k), r)
+  return map
+}

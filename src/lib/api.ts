@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
-import type { Job, JobInput } from './jobs'
+import type { CompanyReview, Job, JobInput } from './jobs'
+import type { NewsArticle } from './news'
 
 export type TxType = 'income' | 'expense'
 
@@ -90,6 +91,17 @@ export const api = {
   getJobs: async (token: string) => (await rpc<Job[]>('get_jobs', { p_token: token })).map(toJob),
   saveJob: async (token: string, j: JobInput) => toJob(await rpc<Job>('save_job', { p_token: token, p_job: j })),
   deleteJob: (token: string, id: string) => rpc<void>('delete_job', { p_token: token, p_id: id }),
+  getCompanyReviews: async (token: string) =>
+    (await rpc<CompanyReview[]>('get_company_reviews', { p_token: token })).map((r) => ({ ...r, rating: r.rating == null ? null : Number(r.rating) })),
+
+  getNews: (token: string) => rpc<NewsArticle[]>('get_news', { p_token: token, p_days: 14 }),
+  setNewsSaved: (token: string, id: number, saved: boolean) => rpc<void>('set_news_saved', { p_token: token, p_id: id, p_saved: saved }),
+  /** Ask the fetch-news Edge Function to pull feeds now (it skips if it ran in the last 10 minutes) */
+  refreshNews: async () => {
+    const { data, error } = await supabase.functions.invoke('fetch-news', { body: {} })
+    if (error) throw new ApiError(error.message)
+    return data as { upserted?: number; skipped?: string }
+  },
 }
 
 const toJob = (j: Job): Job => ({

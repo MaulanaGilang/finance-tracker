@@ -5,7 +5,8 @@ import { StatusRing } from '../../components/jobs/Status'
 import { PageHeader, cx } from '../../components/ui'
 import { friendlyError } from '../../lib/api'
 import { CATEGORY, FLEXIBILITY, STATUS, STATUS_ORDER, daysSince, daysUntilGhost, salaryLabel, type Job, type JobInput, type JobStatus } from '../../lib/jobs'
-import { useStore } from '../../lib/store'
+import { useCompanyReview, useStore } from '../../lib/store'
+import { RatingChip } from '../../components/jobs/CompanyReview'
 import { ViewToggle } from './Applications'
 
 const toInput = (j: Job, status: JobStatus): JobInput => ({
@@ -139,6 +140,7 @@ function BoardCard({
   const lastHover = useRef<JobStatus | null>(null)
   const ghostIn = daysUntilGhost(job)
   const salary = salaryLabel(job)
+  const review = useCompanyReview(job.company)
 
   const track = (_: PointerEvent, info: PanInfo) => {
     const s = statusAt(info.point)
@@ -184,7 +186,10 @@ function BoardCard({
     >
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14px] font-[480]">{job.company}</p>
+          <p className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate text-[14px] font-[480]">{job.company}</span>
+            <RatingChip review={review} className="shrink-0" />
+          </p>
           <p className="truncate text-[13px] text-muted">{job.position}</p>
         </div>
         <span

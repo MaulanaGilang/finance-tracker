@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { demoCategories, demoJobs, demoSaveJob, demoTransactions, isDemo } from './demo'
+import { demoCategories, demoJobs, demoNews, demoReviews, demoSaveJob, demoTransactions, isDemo } from './demo'
+import type { NewsArticle } from './news'
 import { api, ApiError, type Category, type CategoryInput, type Transaction, type TransactionInput } from './api'
-import type { Job, JobInput } from './jobs'
+import { normalizeCompany, reviewIndex, type CompanyReview, type Job, type JobInput } from './jobs'
 
 type Status = 'checking' | 'setup' | 'locked' | 'ready' | 'offline'
 
@@ -12,6 +13,9 @@ interface Store {
   categories: Category[]
   transactions: Transaction[]
   jobs: Job[]
+  reviews: CompanyReview[]
+  news: NewsArticle[]
+  newsRefreshing: boolean
 
   setupPin: (pin: string) => Promise<void>
   unlock: (pin: string) => Promise<boolean>
@@ -25,6 +29,8 @@ interface Store {
   deleteCategory: (id: string) => Promise<void>
   saveJob: (j: JobInput) => Promise<Job>
   deleteJob: (id: string) => Promise<void>
+  toggleNewsSaved: (a: NewsArticle) => Promise<void>
+  refreshNews: () => Promise<string>
 
   composer: { open: boolean; editing: Transaction | null }
   /** id of the transaction just saved, briefly highlighted in lists */
@@ -66,6 +72,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [categories, setCategories] = useState<Category[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
+  const [reviews, setReviews] = useState<CompanyReview[]>([])
+  const [news, setNews] = useState<NewsArticle[]>([])
+  const [newsRefreshing, setNewsRefreshing] = useState(false)
   const [jobComposer, setJobComposer] = useState<{ open: boolean; editing: Job | null }>({ open: false, editing: null })
   const [composer, setComposer] = useState<{ open: boolean; editing: Transaction | null }>({
     open: false,
@@ -96,10 +105,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setLoading(true)
       setLoadError(null)
       try {
-        const [cats, txs, js] = await Promise.all([api.getCategories(t), api.getTransactions(t), api.getJobs(t)])
+        const [cats, txs, js, rvs, nws] = await Promise.all([api.getCategories(t), api.getTransactions(t), api.getJobs(t), api.getCompanyReviews(t), api.getNews(t)])
         setCategories(cats)
         setTransactions(txs)
         setJobs(js)
+        setReviews(rvs)
+        setNews(nws)
         setStatus('ready')
       } catch (e) {
         if (isSessionError(e)) await resetToLock()
@@ -120,6 +131,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setCategories(demoCategories)
       setTransactions(demoTransactions())
       setJobs(demoJobs())
+      setReviews(demoReviews())
+      setNews(demoNews())
       setStatus('ready')
       return
     }
@@ -160,6 +173,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       categories,
       transactions,
       jobs,
+      reviews,
+      news,
+      newsRefreshing,
 
       setupPin: async (pin) => startSession(await api.setupPin(pin)),
       unlock: async (pin) => {
@@ -218,6 +234,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setJobs((prev) => prev.filter((x) => x.id !== id))
       },
 
+      toggleNewsSaved: async (a) => {
+        const saved = !a.saved
+        setNews((prev) => prev.map((x) => (x.id === a.id ? { ...x, saved } : x)))
+        if (isDemo) return
+        try {
+          await guarded((t) => api.setNewsSaved(t, a.id, saved))
+        } catch (e) {
+          setNews((prev) => prev.map((x) => (x.id === a.id ? { ...x, saved: !saved } : x)))
+          throw e
+        }
+      },
+      refreshNews: async () => {
+        if (isDemo || !token) return 'Demo mode: nothing to refresh.'
+        setNewsRefreshing(true)
+        try {
+          const res = await api.refreshNews()
+          setNews(await guarded((t) => api.getNews(t)))
+          return res.skipped ? 'Already up to date (refreshed in the last 10 minutes).' : `${res.upserted ?? 0} stories checked.`
+        } finally {
+          setNewsRefreshing(false)
+        }
+      },
+
       composer,
       highlightId,
       openComposer: (editing) => setComposer({ open: true, editing: editing ?? null }),
@@ -227,7 +266,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       openJobComposer: (editing) => setJobComposer({ open: true, editing: editing ?? null }),
       closeJobComposer: () => setJobComposer((c) => ({ ...c, open: false })),
     }),
-    [status, loading, loadError, categories, transactions, jobs, composer, jobComposer, highlightId, token, guarded, load, resetToLock, startSession],
+    [status, loading, loadError, categories, transactions, jobs, reviews, news, newsRefreshing, composer, jobComposer, highlightId, token, guarded, load, resetToLock, startSession],
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
@@ -242,4 +281,11 @@ export function useStore() {
 export function useCategoryMap() {
   const { categories } = useStore()
   return useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories])
+}
+
+/** The researched review for a company name, if any */
+export function useCompanyReview(company: string) {
+  const { reviews } = useStore()
+  const index = useMemo(() => reviewIndex(reviews), [reviews])
+  return index.get(normalizeCompany(company)) ?? null
 }
