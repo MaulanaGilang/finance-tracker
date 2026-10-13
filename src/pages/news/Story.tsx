@@ -1,42 +1,20 @@
-import { useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode, type RefObject } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
-import { motion, useReducedMotion } from 'motion/react'
-import {
-  ArrowCounterClockwise,
-  ArrowLeft,
-  ArrowSquareOut,
-  Bank,
-  Boat,
-  BookmarkSimple,
-  Brain,
-  Clock,
-  Cpu,
-  GlobeHemisphereWest,
-  Lightning,
-  Robot,
-  type IconProps,
-} from '@phosphor-icons/react'
+import { motion } from 'motion/react'
+import { ArrowCounterClockwise, ArrowLeft, ArrowSquareOut, BookmarkSimple, Clock } from '@phosphor-icons/react'
 import { Globe, PLACE_COLORS, loadFlag, type GlobeController } from '../../components/news/Globe'
 import { ImpactBadge, TopicTag } from '../../components/news/Article'
 import { Card, Empty, IconButton, Skeleton, cx } from '../../components/ui'
 import { detectPlaces, type Place } from '../../lib/countries'
 import { EASE_OUT, pillSpring } from '../../lib/motion'
-import { TOPICS, isHighImpact, plainText, readMinutes, storyParagraphs, timeAgo, type NewsArticle, type NewsTopic } from '../../lib/news'
+import { isHighImpact, plainText, readMinutes, storyParagraphs, timeAgo, type NewsArticle } from '../../lib/news'
 import { useStore } from '../../lib/store'
 
-/** Stand-in symbol for stories that aren't about a particular country */
-const TOPIC_ICONS: Record<NewsTopic, ComponentType<IconProps>> = {
-  ai: Brain,
-  robotics: Robot,
-  geopolitics: GlobeHemisphereWest,
-  central_banks: Bank,
-  energy: Lightning,
-  trade: Boat,
-  semiconductors: Cpu,
-}
-
-/** One story on its own page: a full-bleed globe tours the countries it's about, the article floats over it */
+/**
+ * One story on its own page. When it's about a place, a full-bleed globe tours the countries and the article
+ * floats over it; otherwise the article is a plain, centred read.
+ */
 export function NewsStory() {
   const { id } = useParams()
   const { news, loading } = useStore()
@@ -57,12 +35,12 @@ export function NewsStory() {
  * The visual sits fixed behind the page, rendered into <body>: the page wrapper animates a transform on
  * entry, which would otherwise pin "fixed" to the wrapper instead of the screen.
  */
-function Stage({ tall, children }: { tall: boolean; children: ReactNode }) {
+function Stage({ children }: { children: ReactNode }) {
   return createPortal(
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1, transition: { duration: 0.5, ease: EASE_OUT } }}
-      className={cx('pointer-events-none fixed inset-x-0 top-14 z-0 md:top-16 lg:bottom-0', tall ? 'h-[56dvh] lg:h-auto' : 'h-[38dvh] lg:h-auto')}
+      className="pointer-events-none fixed inset-x-0 top-14 z-0 h-[56dvh] md:top-16 lg:bottom-0 lg:h-auto"
     >
       {children}
     </motion.div>,
@@ -91,7 +69,6 @@ function Story({ a }: { a: NewsArticle }) {
     if (places.length && !tourPlaces.length) setTourPlaces(places)
   }, [places, tourPlaces.length])
 
-  const topic = a.topics[0]
   const minutes = readMinutes(a.word_count)
   const loadingText = a.details_status === 'pending' && paragraphs.length <= 1
   // In-app history: go back (keeps the feed's scroll and filters); opened from a link: go to the feed
@@ -100,18 +77,15 @@ function Story({ a }: { a: NewsArticle }) {
 
   return (
     <article>
-      {hasGlobe ? (
-        <Stage tall>
+      {hasGlobe && (
+        <Stage>
           <Globe places={tourPlaces} controller={globe} onFocus={setFocus} avoid={panel} className="size-full" />
         </Stage>
-      ) : topic ? (
-        <Stage tall={false}>
-          <TopicEmblem topic={topic} avoid={panel} />
-        </Stage>
-      ) : null}
+      )}
 
       {/* The article: frosted so it stays readable wherever the globe sits under it */}
-      <div className={cx('relative z-10 lg:ml-auto lg:mt-0 lg:w-[480px]', hasGlobe ? 'mt-[50dvh]' : topic ? 'mt-[32dvh]' : '')}>
+      {/* With a globe: a side panel over it. Without: a centred column with room to read */}
+      <div className={cx('relative z-10', hasGlobe ? 'mt-[50dvh] lg:ml-auto lg:mt-0 lg:w-[480px]' : 'mx-auto max-w-[720px]')}>
         <div
           ref={panel}
           className="rounded-[20px] border border-white/80 bg-canvas/75 p-5 ring-1 ring-line/60 backdrop-blur-xl backdrop-saturate-150 sm:p-7"
@@ -218,102 +192,6 @@ function PlaceChips({ places, focus, globe }: { places: Place[]; focus: number; 
       <IconButton label="Replay the tour" onClick={() => globe.current?.replay()} className="shrink-0 text-muted">
         <ArrowCounterClockwise size={18} />
       </IconButton>
-    </div>
-  )
-}
-
-/**
- * No country to show: the topic's symbol, large and open on the page. Orbit rings draw themselves in and
- * keep turning slowly, the symbol floats; with reduced motion it all simply appears.
- */
-function TopicEmblem({ topic, avoid }: { topic: NewsTopic; avoid: RefObject<HTMLElement | null> }) {
-  const Icon = TOPIC_ICONS[topic]
-  const { color, label } = TOPICS[topic]
-  const reduce = useReducedMotion()
-  const wrap = useRef<HTMLDivElement>(null)
-  const [center, setCenter] = useState<{ x: number; size: number } | null>(null)
-
-  // Centre in the space beside the article panel on wide screens, like the globe
-  useEffect(() => {
-    const measure = () => {
-      const box = wrap.current?.getBoundingClientRect()
-      if (!box) return
-      const p = avoid.current?.getBoundingClientRect()
-      const beside = p && p.left > box.width * 0.4
-      const free = beside ? p.left - 24 : box.width
-      setCenter({ x: free / 2, size: Math.min(free * 0.8, box.height * 0.82, 560) })
-    }
-    measure()
-    const ro = new ResizeObserver(measure)
-    if (wrap.current) ro.observe(wrap.current)
-    if (avoid.current) ro.observe(avoid.current)
-    return () => ro.disconnect()
-  }, [avoid])
-
-  const rings = [
-    { r: 0.32, dash: '', speed: 60, dot: 0.15 },
-    { r: 0.41, dash: '2 6', speed: -90, dot: 0.6 },
-    { r: 0.49, dash: '', speed: 140, dot: 0.85 },
-  ]
-  return (
-    <div ref={wrap} className="relative size-full">
-      {center && (
-        <div className="absolute top-1/2" style={{ left: center.x, width: center.size, height: center.size, transform: 'translate(-50%, -50%)' }}>
-          {/* Each ring is its own layer so it turns around the centre */}
-          {rings.map((ring, i) => (
-            <motion.div
-              key={i}
-              className="absolute inset-0"
-              animate={reduce ? undefined : { rotate: ring.speed > 0 ? 360 : -360 }}
-              transition={{ duration: Math.abs(ring.speed), repeat: Infinity, ease: 'linear' }}
-            >
-              <svg viewBox="0 0 100 100" className="size-full overflow-visible" aria-hidden>
-                <motion.circle
-                  cx={50}
-                  cy={50}
-                  r={ring.r * 100}
-                  fill="none"
-                  stroke={color}
-                  strokeOpacity={0.22 - i * 0.04}
-                  strokeWidth={0.3}
-                  strokeDasharray={ring.dash || undefined}
-                  initial={reduce || ring.dash ? { opacity: 0 } : { pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 1 }}
-                  transition={{ duration: 1.4, ease: EASE_OUT, delay: 0.1 + i * 0.12 }}
-                />
-                <motion.circle
-                  cx={50 + Math.cos(ring.dot * Math.PI * 2) * ring.r * 100}
-                  cy={50 + Math.sin(ring.dot * Math.PI * 2) * ring.r * 100}
-                  r={0.9 - i * 0.15}
-                  fill={color}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.55 }}
-                  transition={{ duration: 0.6, delay: 0.9 + i * 0.12 }}
-                />
-              </svg>
-            </motion.div>
-          ))}
-          {/* The symbol: settles in, then drifts up and down a few pixels */}
-          <motion.div
-            className="absolute inset-0 flex flex-col items-center justify-center gap-3"
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, ease: EASE_OUT, delay: 0.2 }}
-          >
-            <motion.span
-              className="flex aspect-square w-[34%] items-center justify-center rounded-full"
-              style={{ background: `radial-gradient(circle at 35% 30%, color-mix(in srgb, ${color} 10%, white), color-mix(in srgb, ${color} 22%, #efefe8))`, color }}
-              animate={reduce ? undefined : { y: [0, -6, 0] }}
-              transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <Icon weight="duotone" className="size-[52%]" />
-            </motion.span>
-            <span className="text-[13px] font-[480]" style={{ color }}>
-              {label}
-            </span>
-          </motion.div>
-        </div>
-      )}
     </div>
   )
 }

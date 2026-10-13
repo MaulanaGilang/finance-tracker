@@ -136,6 +136,11 @@ export function demoNews(): NewsArticle[] {
     ['Open-source AI model rivals larger systems on benchmarks', 'Demo Tech', ['ai'], 12, 0, null],
     ['Nickel prices slide on Indonesian output surge', 'Demo Markets', ['energy', 'trade'], 20, 3, 'Higher smelter output added to an already oversupplied market.'],
     ['Japan, the Philippines and Australia meet to ease tensions over shipping lanes', 'Demo Wire', ['geopolitics'], 30, 2, 'Insurers have raised premiums for vessels crossing the strait.'],
+    ['UK growth upgraded but energy prices and rates to bite next year', 'Demo Wire', ['energy', 'central_banks'], 34, 4, 'The forecast was raised for this year.'],
+    ['Norway and Russia agree Arctic fishing quotas', 'Demo Wire', ['geopolitics'], 40, 1, 'The deal covers cod in the Barents Sea.'],
+    ['Chile and Vietnam sign copper supply pact', 'Demo Markets', ['energy', 'trade'], 44, 3, 'The agreement runs for five years.'],
+    ['Italy pushes the EU for looser deficit rules', 'Demo Wire', ['central_banks'], 50, 3, 'Rome wants more room for defence spending.'],
+    ['Yemen talks resume as Red Sea shipping slowly returns', 'Demo Wire', ['geopolitics', 'trade'], 56, 2, 'Envoys met in Muscat over the weekend.'],
   ]
   return rows.map(([title, source, topics, hoursAgo, market_score, summary], i) => ({
     id: i + 1, url: 'https://example.com/' + i, title, summary, source, image_url: null,

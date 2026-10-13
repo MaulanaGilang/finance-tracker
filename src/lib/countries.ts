@@ -147,21 +147,24 @@ const ORGS: Record<string, RegExp> = {
 }
 
 const count = (re: RegExp, s: string) => (s.match(new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g')) ?? []).length
+/** How many sentences mention it: "in Bangkok, Thailand" is one mention, not two */
+const sentencesWith = (re: RegExp, sentences: string[]) => sentences.filter((s) => re.test(s)).length
 const firstIndex = (re: RegExp | undefined, s: string) => (re ? (new RegExp(re.source).exec(s)?.index ?? Infinity) : Infinity)
 
 /**
  * Countries the story is about, most central first (max 4, so the tour stays short).
- * A place counts when the headline names it (or a company from there), or the body names it at least twice:
+ * A place counts when the headline names it (or a company from there), or at least two sentences of the body do:
  * a single passing mention ("...like the US did last year") is usually not what the story is about.
  */
 export function detectPlaces(title: string, body: string, max = 4): Place[] {
   const text = `${title} ${body}`
+  const sentences = body.split(/(?<=[.!?])\s+/)
   const scored = PLACES.map((p) => {
     const org = ORGS[p.code]
     const inTitle = count(p.pattern, title)
-    const inBody = count(p.pattern, body)
+    const inBody = sentencesWith(p.pattern, sentences)
     const orgTitle = org ? count(org, title) : 0
-    const orgBody = org ? count(org, body) : 0
+    const orgBody = org ? sentencesWith(org, sentences) : 0
     const qualifies = inTitle > 0 || inBody >= 2 || orgTitle > 0 || orgBody >= 3
     const first = Math.min(firstIndex(p.pattern, text), firstIndex(org, text))
     return { p, inTitle, qualifies, score: inTitle * 3 + inBody + orgTitle * 2 + orgBody * 0.5, first }
