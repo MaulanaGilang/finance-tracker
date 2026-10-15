@@ -3,11 +3,9 @@ import { Link } from 'react-router'
 import { motion } from 'motion/react'
 import { ArrowRight, Briefcase, LockSimple, Newspaper, Wallet } from '@phosphor-icons/react'
 import { Logo, useToolTheme } from '../components/AppShell'
-import { formatIDR, currentMonth } from '../lib/format'
 import { goingQuiet, jobKpis } from '../lib/jobs'
 import { isHighImpact, within } from '../lib/news'
 import { EASE_OUT, itemVariants, listVariants } from '../lib/motion'
-import { inMonth, totals } from '../lib/stats'
 import { useStore } from '../lib/store'
 
 const greeting = () => {
@@ -17,10 +15,9 @@ const greeting = () => {
 
 /** After the PIN: pick a tool. Each card glows in its own tool color (Arc-style spaces). */
 export function ToolChooser() {
-  const { transactions, jobs, news, lock } = useStore()
+  const { jobs, news, lock } = useStore()
   useToolTheme(null)
 
-  const net = totals(inMonth(transactions, currentMonth())).net
   const k = jobKpis(jobs)
   const quiet = goingQuiet(jobs).length
   const today = news.filter((a) => within(a.published_at, 24))
@@ -47,7 +44,6 @@ export function ToolChooser() {
             icon={<Wallet size={22} />}
             title="Budget"
             body="Income, spending and reports."
-            stat={`Net this month ${net < 0 ? '-' : ''}${formatIDR(Math.abs(net))}`}
             palette={{ '--panel-1': '#2a5f49', '--panel-2': '#1f4d3a', '--panel-3': '#163829', glow: '#cfe7d7' }}
           />
           <ToolCard
@@ -84,7 +80,8 @@ function ToolCard({
   icon: ReactNode
   title: string
   body: string
-  stat: string
+  /** A one-line summary (Budget has none) */
+  stat?: string
   palette: Record<'--panel-1' | '--panel-2' | '--panel-3' | 'glow', string>
 }) {
   return (
@@ -103,8 +100,8 @@ function ToolCard({
           <h2 className="mb-1.5 font-display text-[26px] leading-[1.15] sm:text-[30px]">{title}</h2>
           <p className="mb-5 text-[15px] text-white/70">{body}</p>
           <div className="flex items-center justify-between gap-3">
-            <span className="glass-on-dark truncate rounded-pill px-3.5 py-1.5 text-[13px] tabular-nums">{stat}</span>
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/90 text-ink transition-transform duration-300 group-hover:translate-x-1">
+            {stat && <span className="glass-on-dark truncate rounded-pill px-3.5 py-1.5 text-[13px] tabular-nums">{stat}</span>}
+            <span className="ml-auto flex size-10 shrink-0 items-center justify-center rounded-full bg-white/90 text-ink transition-transform duration-300 group-hover:translate-x-1">
               <ArrowRight size={18} />
             </span>
           </div>
