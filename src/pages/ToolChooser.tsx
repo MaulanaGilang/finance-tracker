@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { motion } from 'motion/react'
 import { ArrowRight, Briefcase, LockSimple, Newspaper, Wallet } from '@phosphor-icons/react'
 import { Logo, useToolTheme } from '../components/AppShell'
+import { dayLabel } from '../lib/format'
 import { goingQuiet, jobKpis } from '../lib/jobs'
 import { isHighImpact, within } from '../lib/news'
 import { EASE_OUT, itemVariants, listVariants } from '../lib/motion'
@@ -15,9 +16,13 @@ const greeting = () => {
 
 /** After the PIN: pick a tool. Each card glows in its own tool color (Arc-style spaces). */
 export function ToolChooser() {
-  const { jobs, news, lock } = useStore()
+  const { transactions, jobs, news, lock } = useStore()
   useToolTheme(null)
 
+  // Budget shows when you last logged something rather than any amount
+  const lastEntry = transactions[0]?.date
+  const day = lastEntry ? dayLabel(lastEntry) : ''
+  const lastLabel = day === 'Today' || day === 'Yesterday' ? day.toLowerCase() : day
   const k = jobKpis(jobs)
   const quiet = goingQuiet(jobs).length
   const today = news.filter((a) => within(a.published_at, 24))
@@ -44,6 +49,7 @@ export function ToolChooser() {
             icon={<Wallet size={22} />}
             title="Budget"
             body="Income, spending and reports."
+            stat={lastEntry ? `Last entry ${lastLabel}` : 'No entries yet'}
             palette={{ '--panel-1': '#2a5f49', '--panel-2': '#1f4d3a', '--panel-3': '#163829', glow: '#cfe7d7' }}
           />
           <ToolCard
@@ -80,16 +86,16 @@ function ToolCard({
   icon: ReactNode
   title: string
   body: string
-  /** A one-line summary (Budget has none) */
-  stat?: string
+  stat: string
   palette: Record<'--panel-1' | '--panel-2' | '--panel-3' | 'glow', string>
 }) {
   return (
-    <motion.div whileHover={{ y: -4 }} whileTap={{ scale: 0.985 }} transition={{ duration: 0.35, ease: EASE_OUT }}>
+    // h-full on the wrapper and the link: cards in a row share one height even when a title wraps
+    <motion.div className="h-full" whileHover={{ y: -4 }} whileTap={{ scale: 0.985 }} transition={{ duration: 0.35, ease: EASE_OUT }}>
       <Link
         to={to}
         style={vars as CSSProperties}
-        className="glow-panel group flex min-h-[220px] flex-col justify-between rounded-[22px] p-6 outline-offset-4 sm:min-h-[260px] sm:p-8"
+        className="glow-panel group flex h-full min-h-[220px] flex-col justify-between rounded-[22px] p-6 outline-offset-4 sm:min-h-[260px] sm:p-8"
       >
         {/* Soft-focus light; brightens on hover */}
         <span className="light drift transition-opacity duration-500 group-hover:opacity-60" style={{ width: 300, height: 300, right: '-12%', top: '-40%', background: glow, opacity: 0.35 }} />
@@ -100,8 +106,8 @@ function ToolCard({
           <h2 className="mb-1.5 font-display text-[26px] leading-[1.15] sm:text-[30px]">{title}</h2>
           <p className="mb-5 text-[15px] text-white/70">{body}</p>
           <div className="flex items-center justify-between gap-3">
-            {stat && <span className="glass-on-dark truncate rounded-pill px-3.5 py-1.5 text-[13px] tabular-nums">{stat}</span>}
-            <span className="ml-auto flex size-10 shrink-0 items-center justify-center rounded-full bg-white/90 text-ink transition-transform duration-300 group-hover:translate-x-1">
+            <span className="glass-on-dark truncate rounded-pill px-3.5 py-1.5 text-[13px] tabular-nums">{stat}</span>
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/90 text-ink transition-transform duration-300 group-hover:translate-x-1">
               <ArrowRight size={18} />
             </span>
           </div>
