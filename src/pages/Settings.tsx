@@ -9,7 +9,11 @@ import { SOURCES } from '../lib/news'
 import { useStore } from '../lib/store'
 import type { Tool } from '../components/AppShell'
 
-const SWATCHES = ['#1F4D3A', '#2F7A55', '#3F6E5A', '#4E9470', '#6B8F7D', '#8DB59E', '#A3B8AC', '#B5483B', '#C9846F', '#D4A65A', '#5B6B8C', '#B9BDB7']
+/** Income stays in the greens; expenses get their own non-green set so each category is easy to tell apart */
+const SWATCHES = {
+  income: ['#1F4D3A', '#2F7A55', '#3F6E5A', '#4E9470', '#6B8F7D', '#8DB59E', '#A3B8AC', '#B9BDB7'],
+  expense: ['#D9734E', '#3F7FB0', '#5B6B8C', '#B5577A', '#8A4F9E', '#B5483B', '#D4A65A', '#C9846F', '#2F8C9A', '#6E5BA8', '#8C6D4F', '#B9BDB7'],
+}
 
 /**
  * Settings, scoped to the tool you're in. Security (PIN, lock) and the full backup are shared;
@@ -140,7 +144,7 @@ function CategoryForm({
   onCancel: () => void
 }) {
   const [name, setName] = useState(initial?.name ?? '')
-  const [color, setColor] = useState(initial?.color ?? SWATCHES[type === 'expense' ? 0 : 1])
+  const [color, setColor] = useState(initial?.color ?? SWATCHES[type][type === 'expense' ? 0 : 1])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const id = `cat-${initial?.id ?? 'new'}-${type}`
@@ -166,7 +170,7 @@ function CategoryForm({
       <fieldset>
         <legend className="mb-2 text-[13px] font-[480] text-muted">Colour</legend>
         <div className="flex flex-wrap gap-2">
-          {SWATCHES.map((s) => (
+          {SWATCHES[type].map((s) => (
             <button
               key={s}
               type="button"

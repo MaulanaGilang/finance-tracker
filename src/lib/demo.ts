@@ -18,12 +18,12 @@ const cat = (id: string, name: string, type: Category['type'], color: string): C
 export const demoCategories: Category[] = [
   cat('salary', 'Salary', 'income', '#2F7A55'),
   cat('freelance', 'Freelance', 'income', '#4E9470'),
-  cat('food', 'Food', 'expense', '#1F4D3A'),
-  cat('transport', 'Transport', 'expense', '#3F6E5A'),
-  cat('bills', 'Bills', 'expense', '#6B8F7D'),
-  cat('shopping', 'Shopping', 'expense', '#A3B8AC'),
-  cat('fun', 'Entertainment', 'expense', '#B5483B'),
-  cat('health', 'Health', 'expense', '#C9846F'),
+  cat('food', 'Food & Beverages', 'expense', '#D9734E'),
+  cat('transport', 'Transport', 'expense', '#3F7FB0'),
+  cat('bills', 'Bills', 'expense', '#5B6B8C'),
+  cat('shopping', 'Shopping', 'expense', '#B5577A'),
+  cat('fun', 'Entertainment', 'expense', '#8A4F9E'),
+  cat('health', 'Health', 'expense', '#B5483B'),
 ]
 
 export function demoTransactions(): Transaction[] {
