@@ -21,7 +21,7 @@ import { Sheet } from '../Sheet'
 import { Button, Field, Segmented, cx, inputClass, selectClass } from '../ui'
 import { StatusRing } from './Status'
 
-const PLATFORMS = ['LinkedIn', 'Glints', 'Kalibrr', 'Dealls', 'JobStreet', 'Indeed', 'Instagram', 'Company website', 'Referral']
+const PLATFORMS = ['LinkedIn', 'Glints', 'Kalibrr', 'Dealls', 'JobStreet', 'Indeed', 'Instagram', 'Company website', 'Referral', 'Job fair']
 
 export function JobComposer() {
   const { jobComposer, closeJobComposer } = useStore()
