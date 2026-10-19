@@ -23,10 +23,14 @@ import { StatusRing } from './Status'
 
 const PLATFORMS = ['LinkedIn', 'Indeed', 'Glints', 'Dealls', 'Kalibrr', 'Talentics', 'JobStreet', 'Referrals', 'Job Fair', 'Other']
 
-/** Enter in a text field shouldn't submit the form: only the Add / Save button does */
+/*
+  Only the Add / Save button saves. The form never submits on its own: Enter in a field, a phone keyboard's
+  Go key on the link field, or a browser autofill would otherwise all count as submitting.
+*/
 const noEnterSubmit = (e: KeyboardEvent<HTMLDivElement>) => {
   if (e.key === 'Enter' && e.target instanceof HTMLInputElement) e.preventDefault()
 }
+const blockSubmit = (e: FormEvent) => e.preventDefault()
 
 export function JobComposer() {
   const { jobComposer, closeJobComposer } = useStore()
@@ -69,9 +73,9 @@ function JobSheet({ onClose }: { onClose: () => void }) {
     set(n ? formatNumber(n) : '')
   }
 
-  async function save(e: FormEvent) {
-    e.preventDefault()
+  async function save() {
     if (!position.trim() || !company.trim()) return setError('Position and company are required.')
+    if (!appliedDate) return setError('Pick the date you applied.')
     const min = parseAmount(salaryMin) || null
     const max = parseAmount(salaryMax) || null
     if (min && max && min > max) return setError('Minimum salary is higher than the maximum.')
@@ -113,7 +117,7 @@ function JobSheet({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Sheet title={editing ? 'Edit application' : 'New application'} onClose={onClose} onSubmit={save} maxWidth="sm:max-w-[560px]">
+    <Sheet title={editing ? 'Edit application' : 'New application'} onClose={onClose} onSubmit={blockSubmit} maxWidth="sm:max-w-[560px]">
       <div className="flex flex-col gap-5" onKeyDown={noEnterSubmit}>
         {editing && <CompanyReviewPanel review={review} company={editing.company} />}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -220,7 +224,7 @@ function JobSheet({ onClose }: { onClose: () => void }) {
               Delete
             </Button>
           )}
-          <Button type="submit" variant="primary" className="flex-1" disabled={busy}>
+          <Button type="button" variant="primary" className="flex-1" disabled={busy} onClick={() => void save()}>
             {busy ? 'Saving…' : editing ? 'Save changes' : 'Add application'}
           </Button>
         </div>
