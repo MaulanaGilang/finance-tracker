@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { AnimatePresence } from 'motion/react'
 import { Ghost, Info } from '@phosphor-icons/react'
 import { friendlyError } from '../../lib/api'
@@ -21,7 +21,12 @@ import { Sheet } from '../Sheet'
 import { Button, Field, Segmented, cx, inputClass, selectClass } from '../ui'
 import { StatusRing } from './Status'
 
-const PLATFORMS = ['LinkedIn', 'Glints', 'Kalibrr', 'Dealls', 'JobStreet', 'Indeed', 'Instagram', 'Company website', 'Referral', 'Job fair']
+const PLATFORMS = ['LinkedIn', 'Indeed', 'Glints', 'Dealls', 'Kalibrr', 'Talentics', 'JobStreet', 'Referrals', 'Job Fair', 'Other']
+
+/** Enter in a text field shouldn't submit the form: only the Add / Save button does */
+const noEnterSubmit = (e: KeyboardEvent<HTMLDivElement>) => {
+  if (e.key === 'Enter' && e.target instanceof HTMLInputElement) e.preventDefault()
+}
 
 export function JobComposer() {
   const { jobComposer, closeJobComposer } = useStore()
@@ -52,8 +57,8 @@ function JobSheet({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
-  // Suggestions drawn from what you've used before
-  const platforms = useMemo(() => [...new Set([...jobs.map((j) => j.platform).filter(Boolean), ...PLATFORMS])] as string[], [jobs])
+  // Older applications may have a platform from before the fixed list: keep it selectable so editing doesn't lose it
+  const platforms = editing?.platform && !PLATFORMS.includes(editing.platform) ? [editing.platform, ...PLATFORMS] : PLATFORMS
   const locations = useMemo(() => [...new Set(jobs.map((j) => j.location).filter(Boolean))] as string[], [jobs])
 
   const statusChanged = editing && status !== editing.status
@@ -109,7 +114,7 @@ function JobSheet({ onClose }: { onClose: () => void }) {
 
   return (
     <Sheet title={editing ? 'Edit application' : 'New application'} onClose={onClose} onSubmit={save} maxWidth="sm:max-w-[560px]">
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5" onKeyDown={noEnterSubmit}>
         {editing && <CompanyReviewPanel review={review} company={editing.company} />}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Position" htmlFor="j-position">
@@ -152,7 +157,8 @@ function JobSheet({ onClose }: { onClose: () => void }) {
           </p>
         ) : null}
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {/* One per row: three options each don't fit side by side in the sheet */}
+        <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-col gap-2">
             <span className="text-[13px] font-[480] text-muted">Category</span>
             <Segmented label="Category" value={category} onChange={setCategory} className="w-full" options={(Object.keys(CATEGORY) as JobCategory[]).map((k) => ({ value: k, label: CATEGORY[k] }))} />
@@ -169,8 +175,16 @@ function JobSheet({ onClose }: { onClose: () => void }) {
             <datalist id="j-locations">{locations.map((l) => <option key={l} value={l} />)}</datalist>
           </Field>
           <Field label="Platform" htmlFor="j-platform">
-            <input id="j-platform" list="j-platforms" value={platform} onChange={(e) => setPlatform(e.target.value)} placeholder="LinkedIn" className={inputClass} />
-            <datalist id="j-platforms">{platforms.map((p) => <option key={p} value={p} />)}</datalist>
+            <select id="j-platform" value={platform} onChange={(e) => setPlatform(e.target.value)} className={cx(selectClass, !platform && 'text-muted')}>
+              <option value="" disabled>
+                Choose a platform
+              </option>
+              {platforms.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
           </Field>
         </div>
 
