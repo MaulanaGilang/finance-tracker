@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent, type KeyboardEvent } from 'react'
+import { useState, type FormEvent, type KeyboardEvent } from 'react'
 import { AnimatePresence } from 'motion/react'
 import { Ghost, Info } from '@phosphor-icons/react'
 import { friendlyError } from '../../lib/api'
@@ -16,6 +16,7 @@ import {
   type JobStatus,
 } from '../../lib/jobs'
 import { useCompanyReview, useStore } from '../../lib/store'
+import { CityPicker } from './CityPicker'
 import { CompanyReviewPanel } from './CompanyReview'
 import { Sheet } from '../Sheet'
 import { Button, Field, Segmented, cx, inputClass, selectClass } from '../ui'
@@ -42,7 +43,7 @@ export function JobComposer() {
 }
 
 function JobSheet({ onClose }: { onClose: () => void }) {
-  const { jobComposer, jobs, saveJob, deleteJob } = useStore()
+  const { jobComposer, saveJob, deleteJob } = useStore()
   const editing = jobComposer.editing
   const review = useCompanyReview(editing?.company ?? '')
 
@@ -63,7 +64,6 @@ function JobSheet({ onClose }: { onClose: () => void }) {
 
   // Older applications may have a platform from before the fixed list: keep it selectable so editing doesn't lose it
   const platforms = editing?.platform && !PLATFORMS.includes(editing.platform) ? [editing.platform, ...PLATFORMS] : PLATFORMS
-  const locations = useMemo(() => [...new Set(jobs.map((j) => j.location).filter(Boolean))] as string[], [jobs])
 
   const statusChanged = editing && status !== editing.status
   const ghostIn = editing && !statusChanged ? daysUntilGhost(editing) : isWaiting(status) ? GHOST_DAYS : null
@@ -175,8 +175,7 @@ function JobSheet({ onClose }: { onClose: () => void }) {
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Location" htmlFor="j-location">
-            <input id="j-location" list="j-locations" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Jakarta Selatan" className={inputClass} />
-            <datalist id="j-locations">{locations.map((l) => <option key={l} value={l} />)}</datalist>
+            <CityPicker id="j-location" value={location} onChange={setLocation} />
           </Field>
           <Field label="Platform" htmlFor="j-platform">
             <select id="j-platform" value={platform} onChange={(e) => setPlatform(e.target.value)} className={cx(selectClass, !platform && 'text-muted')}>
